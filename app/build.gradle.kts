@@ -54,6 +54,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(project(":feature:auth"))
+    implementation(project(":feature:catalog"))
 
     implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)

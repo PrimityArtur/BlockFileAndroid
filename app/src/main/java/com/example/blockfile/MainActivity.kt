@@ -14,6 +14,8 @@ import com.example.blockfile.core.ui.theme.BlockFileTheme
 import com.example.blockfile.feature.auth.AuthViewModel
 import com.example.blockfile.feature.auth.LoginScreen
 import com.example.blockfile.feature.auth.RegisterScreen
+import com.example.blockfile.feature.catalog.CatalogScreen
+import com.example.blockfile.feature.catalog.CatalogViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -53,8 +55,9 @@ fun BlockFileNavHost(
                     navController.navigate(Routes.Register.route)
                 },
                 onLoginSuccess = {
-                    // TODO: navegar al Home del catálogo cuando exista
-                    // navController.navigate("home") { popUpTo(Routes.Login.route) { inclusive = true } }
+                    navController.navigate("catalog") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 }
             )
         }
@@ -71,5 +74,23 @@ fun BlockFileNavHost(
                 }
             )
         }
+
+
+        composable("catalog") {
+            val vm: CatalogViewModel = hiltViewModel()
+            CatalogScreen(
+                viewModel = vm,
+                onGoHome = { /* ya estás en catálogo, no hace nada o recarga */ },
+                onGoRanking = { /* navController.navigate("ranking") */ },
+                onGoPerfil = { /* navController.navigate("perfil") */ },
+                onLogout = {
+                    // limpiar user guardado (si lo usas) y volver al login
+                    navController.navigate("login") {
+                        popUpTo("catalog") { inclusive = true }
+                    }
+                }
+            )
+        }
     }
+
 }
