@@ -3,6 +3,7 @@ package com.example.blockfile.core.data.network
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
+import com.example.blockfile.core.model.ProductDetailResponseDto
 import com.example.blockfile.core.model.RankingMejoresCompradoresResponseDto
 import com.example.blockfile.core.model.RankingProductosMasCompradosResponseDto
 import com.example.blockfile.core.model.RankingProductosMejorCalificadosResponseDto
@@ -11,6 +12,7 @@ import com.example.blockfile.core.model.RegisterResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface BlockFileApi {
@@ -49,4 +51,10 @@ interface BlockFileApi {
     suspend fun getRankingProductosMejorCalificados(
         @Query("page") page: Int,
     ): RankingProductosMejorCalificadosResponseDto
+
+
+    @GET("apimovil/productos/{id}/")
+    suspend fun getProductDetail(
+        @Path("id") id: Long,
+    ): ProductDetailResponseDto
 }

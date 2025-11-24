@@ -1,6 +1,7 @@
 package com.example.blockfile.feature.catalog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,7 @@ fun CatalogScreen(
     onGoRanking: () -> Unit,
     onGoPerfil: () -> Unit,
     onLogout: () -> Unit,
+    onProductClick: (Long) -> Unit,
 ) {
     val state = viewModel.uiState
 
@@ -121,8 +123,11 @@ fun CatalogScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.items) { producto ->
-                        CatalogItemCard(producto = producto)
+                    items(state.items) { product ->
+                        CatalogItemCard(
+                            producto = product,
+                            onClick = { onProductClick(product.id) }
+                        )
                     }
                 }
             }
@@ -154,14 +159,19 @@ fun CatalogScreen(
 }
 
 @Composable
-fun CatalogItemCard(producto: ProductoCatalogo) {
+fun CatalogItemCard(
+    producto: ProductoCatalogo,
+    onClick: () -> Unit,
+    ) {
     // Construimos la URL de la imagen solo si hay imagenId
     val imageUrl = producto.imagenId?.let {
         "https://blockfile.up.railway.app/apimovil/catalogo/imagen/$it/"
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

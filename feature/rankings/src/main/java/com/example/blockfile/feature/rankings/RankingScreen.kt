@@ -1,5 +1,6 @@
 package com.example.blockfile.feature.rankings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ fun RankingsScreen(
     onGoHome: () -> Unit,
     onGoPerfil: () -> Unit,
     onLogout: () -> Unit,
+    onProductClick: (Long) -> Unit,
 ) {
     val state = viewModel.uiState
 
@@ -66,7 +68,8 @@ fun RankingsScreen(
                 RankingTab.PRODUCTOS_MAS_COMPRADOS ->
                     RankingProductosMasCompradosSection(
                         tabState = state.pmc,
-                        onPageChange = { viewModel.loadPMC(it) }
+                        onPageChange = { viewModel.loadPMC(it) },
+                        onProductClick = onProductClick,
                     )
 
                 RankingTab.MEJORES_COMPRADORES ->
@@ -78,7 +81,8 @@ fun RankingsScreen(
                 RankingTab.PRODUCTOS_MEJOR_CALIFICADOS ->
                     RankingProductosMejorCalificadosSection(
                         tabState = state.pmcal,
-                        onPageChange = { viewModel.loadPMCal(it) }
+                        onPageChange = { viewModel.loadPMCal(it) },
+                        onProductClick = onProductClick,
                     )
             }
         }
@@ -89,6 +93,7 @@ fun RankingsScreen(
 private fun RankingProductosMasCompradosSection(
     tabState: RankingTabState<ProductoMasComprado>,
     onPageChange: (Int) -> Unit,
+    onProductClick: (Long) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         if (tabState.loading) {
@@ -102,12 +107,14 @@ private fun RankingProductosMasCompradosSection(
             modifier = Modifier
                 .weight(1f)
                 .padding(8.dp)
+
         ) {
             items(tabState.items) { item ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .clickable { onProductClick(item.id) },
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text("Top ${item.top}", fontWeight = FontWeight.Bold)
@@ -166,6 +173,7 @@ private fun RankingMejoresCompradoresSection(
 private fun RankingProductosMejorCalificadosSection(
     tabState: RankingTabState<ProductoMejorCalificado>,
     onPageChange: (Int) -> Unit,
+    onProductClick: (Long) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         if (tabState.loading) {
@@ -184,7 +192,8 @@ private fun RankingProductosMejorCalificadosSection(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .clickable { onProductClick(item.id) },
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text("Top ${item.top}", fontWeight = FontWeight.Bold)

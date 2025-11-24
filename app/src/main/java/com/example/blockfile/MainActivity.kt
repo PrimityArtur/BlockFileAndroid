@@ -7,15 +7,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.blockfile.core.ui.theme.BlockFileTheme
 import com.example.blockfile.feature.auth.AuthViewModel
 import com.example.blockfile.feature.auth.LoginScreen
 import com.example.blockfile.feature.auth.RegisterScreen
 import com.example.blockfile.feature.catalog.CatalogScreen
 import com.example.blockfile.feature.catalog.CatalogViewModel
+import com.example.blockfile.feature.productdetail.ProductDetailScreen
+import com.example.blockfile.feature.productdetail.ProductDetailViewModel
 import com.example.blockfile.feature.rankings.RankingsScreen
 import com.example.blockfile.feature.rankings.RankingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -90,6 +94,9 @@ fun BlockFileNavHost(
                     navController.navigate("login") {
                         popUpTo("catalog") { inclusive = true }
                     }
+                },
+                onProductClick = { productId ->
+                    navController.navigate("productdetail/$productId")
                 }
             )
         }
@@ -103,6 +110,29 @@ fun BlockFileNavHost(
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo("ranking") { inclusive = true }
+                    }
+                },
+                onProductClick = { productId ->
+                    navController.navigate("productdetail/$productId")
+                }
+            )
+        }
+
+        composable(
+            route = "productdetail/{productId}",
+            arguments = listOf(
+                navArgument("productId") { type = NavType.LongType }
+            )
+        ) {
+            val vm: ProductDetailViewModel = hiltViewModel()
+            ProductDetailScreen(
+                viewModel = vm,
+                onGoHome = { navController.navigate("catalog") },
+                onGoRanking = { navController.navigate("ranking") },
+                onGoPerfil = { /* ... */ },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
