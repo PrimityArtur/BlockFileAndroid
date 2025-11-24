@@ -13,3 +13,99 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+
+# ============================================
+# ANDROID STUDIO / ANDROID APP
+# ============================================
+
+# Gradle
+.gradle/
+build/
+**/build/
+**/.gradle/
+gradle-app.setting
+
+# Log de ProGuard / R8
+proguard/
+*.log
+
+# Carpetas generadas por Android Studio
+captures/
+outputs/
+intermediates/
+generated/
+navigation.json
+navigation-editor/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# IntelliJ / Android Studio metadata
+.idea/
+*.iws
+*.ipr
+
+# Archivos de configuración del editor
+.idea/caches
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Archivos con claves o firmas
+*.jks
+*.keystore
+key.properties
+
+# Archivos de empaquetado
+*.apk
+*.aab
+*.ap_
+*.zip
+
+# Archivos de tests
+test-output/
+
+# Archivos de dispositivo / emulator
+*.lock
+
+# Librerías locales
+libs/*.jar
+libs/*.aar
+
+# ============================================
+# KOTLIN / JAVA
+# ============================================
+*.class
+*.jar
+*.war
+*.ear
+*.dex
+
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+# macOS
+.AppleDouble
+.LSOverride
+__MACOSX/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================
+# ANDROID NDK
+# ============================================
+.obj/
+*.o
+*.so
+*.d
