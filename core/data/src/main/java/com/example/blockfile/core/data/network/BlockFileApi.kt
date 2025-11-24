@@ -3,6 +3,9 @@ package com.example.blockfile.core.data.network
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
+import com.example.blockfile.core.model.RankingMejoresCompradoresResponseDto
+import com.example.blockfile.core.model.RankingProductosMasCompradosResponseDto
+import com.example.blockfile.core.model.RankingProductosMejorCalificadosResponseDto
 import com.example.blockfile.core.model.RegisterRequest
 import com.example.blockfile.core.model.RegisterResponse
 import retrofit2.http.Body
@@ -27,4 +30,23 @@ interface BlockFileApi {
         @Query("autor") autor: String? = null,
         @Query("categoria") categoria: String? = null,
     ): CatalogResponseDto
+
+
+
+
+
+    @GET("apimovil/rankings/productos-mas-comprados/")
+    suspend fun getRankingProductosMasComprados(
+        @Query("page") page: Int,
+    ): RankingProductosMasCompradosResponseDto
+
+    @GET("apimovil/rankings/mejores-compradores/")
+    suspend fun getRankingMejoresCompradores(
+        @Query("page") page: Int,
+    ): RankingMejoresCompradoresResponseDto
+
+    @GET("apimovil/rankings/productos-mejor-calificados/")
+    suspend fun getRankingProductosMejorCalificados(
+        @Query("page") page: Int,
+    ): RankingProductosMejorCalificadosResponseDto
 }
