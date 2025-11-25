@@ -1,6 +1,7 @@
 package com.example.blockfile.core.data.network
 
 import com.example.blockfile.core.model.ActualizarPerfilRequestDto
+import com.example.blockfile.core.model.AdminProductsResponseDto
 import com.example.blockfile.core.model.AdminProfileDto
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.CommentRequestDto
@@ -120,4 +121,13 @@ interface BlockFileApi {
     suspend fun updateAdminProfile(
         @Body body: AdminProfileDto
     ): AdminProfileDto
+
+    @GET("apimovil/admin/productos/")
+    suspend fun getAdminProducts(
+        @Query("page") page: Int,
+        @Query("id") id: Long? = null,
+        @Query("nombre") nombre: String? = null,
+        @Query("autor") autor: String? = null,
+        @Query("categoria") categoria: String? = null,
+    ): AdminProductsResponseDto
 }
