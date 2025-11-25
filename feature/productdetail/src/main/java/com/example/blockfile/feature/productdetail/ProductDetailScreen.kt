@@ -193,7 +193,7 @@ private fun ProductDetailContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface    // 🔹 card oscuro como la web
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(

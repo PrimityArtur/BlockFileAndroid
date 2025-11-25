@@ -1,9 +1,12 @@
 package com.example.blockfile.core.data.network
 
+import com.example.blockfile.core.model.ActualizarPerfilRequestDto
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.CommentRequestDto
+import com.example.blockfile.core.model.ComprasClienteResponseDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
+import com.example.blockfile.core.model.PerfilClienteResponseDto
 import com.example.blockfile.core.model.ProductDetailResponseDto
 import com.example.blockfile.core.model.PurchaseResponseDto
 import com.example.blockfile.core.model.RankingMejoresCompradoresResponseDto
@@ -88,4 +91,20 @@ interface BlockFileApi {
     suspend fun buyProduct(
         @Path("id") id: Long,
     ): PurchaseResponseDto
+
+
+
+
+    @GET("apimovil/perfil/")
+    suspend fun getPerfilCliente(): PerfilClienteResponseDto
+
+    @POST("apimovil/perfil/actualizar/")
+    suspend fun actualizarPerfilCliente(
+        @Body body: ActualizarPerfilRequestDto,
+    ): PerfilClienteResponseDto
+
+    @GET("apimovil/perfil/compras/")
+    suspend fun getComprasCliente(
+        @Query("page") page: Int,
+    ): ComprasClienteResponseDto
 }

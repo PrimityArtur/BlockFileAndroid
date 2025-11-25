@@ -20,6 +20,8 @@ import com.example.blockfile.feature.catalog.CatalogScreen
 import com.example.blockfile.feature.catalog.CatalogViewModel
 import com.example.blockfile.feature.productdetail.ProductDetailScreen
 import com.example.blockfile.feature.productdetail.ProductDetailViewModel
+import com.example.blockfile.feature.profile.ProfileScreen
+import com.example.blockfile.feature.profile.ProfileViewModel
 import com.example.blockfile.feature.rankings.RankingsScreen
 import com.example.blockfile.feature.rankings.RankingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -88,7 +90,7 @@ fun BlockFileNavHost(
                 viewModel = vm,
                 onGoHome = { /* ya estás en catálogo, no hace nada o recarga */ },
                 onGoRanking = { navController.navigate("ranking") },
-                onGoPerfil = { /* navController.navigate("perfil") */ },
+                onGoPerfil = { navController.navigate("perfil") },
                 onLogout = {
                     // limpiar user guardado (si lo usas) y volver al login
                     navController.navigate("login") {
@@ -106,7 +108,7 @@ fun BlockFileNavHost(
             RankingsScreen(
                 viewModel = vm,
                 onGoHome = { navController.navigate("catalog") },
-                onGoPerfil = { /* navController.navigate("perfil") */ },
+                onGoPerfil = { navController.navigate("perfil")  },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo("ranking") { inclusive = true }
@@ -129,11 +131,33 @@ fun BlockFileNavHost(
                 viewModel = vm,
                 onGoHome = { navController.navigate("catalog") },
                 onGoRanking = { navController.navigate("ranking") },
-                onGoPerfil = { /* ... */ },
+                onGoPerfil = { navController.navigate("perfil")  },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        // ============= PERFIL =============
+        composable("perfil") {
+            val vm: ProfileViewModel = hiltViewModel()
+            ProfileScreen(
+                viewModel = vm,
+                onGoHome = {
+                    navController.navigate("catalog")
+                },
+                onGoRankings = {
+                    navController.navigate("ranking")
+                },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onProductClick = { productId ->
+                    navController.navigate("productdetail/$productId")
                 }
             )
         }

@@ -10,6 +10,8 @@ import com.example.blockfile.core.data.repository.ProductDetailRepository
 import com.example.blockfile.core.data.repository.ProductDetailRepositoryImpl
 import com.example.blockfile.core.data.repository.ProductFileRepository
 import com.example.blockfile.core.data.repository.ProductFileRepositoryImpl
+import com.example.blockfile.core.data.repository.ProfileRepository
+import com.example.blockfile.core.data.repository.ProfileRepositoryImpl
 import com.example.blockfile.core.data.repository.RankingRepository
 import com.example.blockfile.core.data.repository.RankingRepositoryImpl
 import dagger.Module
@@ -51,4 +53,9 @@ object RepositoryModule {
         @ApplicationContext context: Context,
     ): ProductFileRepository = ProductFileRepositoryImpl(api, context)
 
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(api: BlockFileApi): ProfileRepository =
+        ProfileRepositoryImpl(api)
 }

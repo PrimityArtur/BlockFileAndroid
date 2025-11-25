@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":feature:catalog"))
     implementation(project(":feature:rankings"))
     implementation(project(":feature:productdetail"))
+    implementation(project(":feature:profile"))
 
     implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)

@@ -1,14 +1,21 @@
 package com.example.blockfile.feature.rankings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.blockfile.core.model.*
 
@@ -89,6 +96,73 @@ fun RankingsScreen(
     }
 }
 
+/* --------------------------------------------------------------------- */
+/*  COMPONENTES GENERALES PARA “TABLAS”                                  */
+/* --------------------------------------------------------------------- */
+
+@Composable
+private fun TableHeader(
+    headers: List<String>,
+    weights: List<Float>,
+) {
+    Surface(
+        tonalElevation = 4.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            headers.forEachIndexed { index, title ->
+                Text(
+                    text = title,
+                    modifier = Modifier
+                        .weight(weights[index])
+                        .padding(horizontal = 6.dp), // más espacio lateral
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center // <-- CENTRADO TOTAL
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun TableRowText(
+    texts: List<String>,
+    weights: List<Float>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 30.dp, horizontal = 16.dp), // MÁS ESPACIO ENTRE CELDAS
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        texts.forEachIndexed { index, value ->
+            Text(
+                text = value,
+                modifier = Modifier
+                    .weight(weights[index])
+                    .padding(horizontal = 6.dp), // separación interna
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center, // <-- CENTRADO TOTAL
+                softWrap = true,
+                maxLines = Int.MAX_VALUE
+            )
+        }
+    }
+}
+
+
+/* --------------------------------------------------------------------- */
+/*  PROD. MÁS COMPRADOS                                                  */
+/* --------------------------------------------------------------------- */
+
 @Composable
 private fun RankingProductosMasCompradosSection(
     tabState: RankingTabState<ProductoMasComprado>,
@@ -103,27 +177,45 @@ private fun RankingProductosMasCompradosSection(
             Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp))
         }
 
-        LazyColumn(
+        // Pesos de cada columna
+        val weights = listOf(0.3f, 2.2f, 1.6f, 1.6f, 1.1f, 1.1f)
+
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(8.dp)
-
         ) {
-            items(tabState.items) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onProductClick(item.id) },
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Top ${item.top}", fontWeight = FontWeight.Bold)
-                        Text(item.nombre, fontWeight = FontWeight.SemiBold)
-                        Text("Autor: ${item.autor.ifBlank { "-" }}")
-                        Text("Categoría: ${item.categoria.ifBlank { "-" }}")
-                        Text("Precio: ${item.precio?.let { "S/ $it" } ?: "-"}")
-                        Text("Compras: ${item.compras}")
+            // HEADER
+            TableHeader(
+                headers = listOf("#", "Producto", "Autor", "Categoría", "Precio", "Compras"),
+                weights = weights,
+            )
+
+            Divider()
+
+            // FILAS
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(tabState.items) { item ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onProductClick(item.id) },
+                    ) {
+                        TableRowText(
+                            texts = listOf(
+                                item.top.toString(),
+                                item.nombre,
+                                item.autor.ifBlank { "-" },
+                                item.categoria.ifBlank { "-" },
+                                item.precio?.let { "S/ $it" } ?: "-",
+                                item.compras.toString()
+                            ),
+                            weights = weights
+                        )
                     }
+                    Divider()
                 }
             }
         }
@@ -131,6 +223,10 @@ private fun RankingProductosMasCompradosSection(
         PagerControls(tabState.page, tabState.totalPages, onPageChange)
     }
 }
+
+/* --------------------------------------------------------------------- */
+/*  MEJORES COMPRADORES                                                  */
+/* --------------------------------------------------------------------- */
 
 @Composable
 private fun RankingMejoresCompradoresSection(
@@ -145,22 +241,35 @@ private fun RankingMejoresCompradoresSection(
             Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp))
         }
 
-        LazyColumn(
+        val weights = listOf(0.8f, 2.6f, 1.2f)
+
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(8.dp)
         ) {
-            items(tabState.items) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Top ${item.top}", fontWeight = FontWeight.Bold)
-                        Text(item.nombre, fontWeight = FontWeight.SemiBold)
-                        Text("N.º de compras: ${item.compras}")
+            TableHeader(
+                headers = listOf("#", "Cliente", "N.º compras"),
+                weights = weights
+            )
+
+            Divider()
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(tabState.items) { item ->
+                    Surface(modifier = Modifier.fillMaxWidth()) {
+                        TableRowText(
+                            texts = listOf(
+                                item.top.toString(),
+                                item.nombre,
+                                item.compras.toString()
+                            ),
+                            weights = weights
+                        )
                     }
+                    Divider()
                 }
             }
         }
@@ -168,6 +277,10 @@ private fun RankingMejoresCompradoresSection(
         PagerControls(tabState.page, tabState.totalPages, onPageChange)
     }
 }
+
+/* --------------------------------------------------------------------- */
+/*  PROD. MEJOR CALIFICADOS                                              */
+/* --------------------------------------------------------------------- */
 
 @Composable
 private fun RankingProductosMejorCalificadosSection(
@@ -183,27 +296,51 @@ private fun RankingProductosMejorCalificadosSection(
             Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp))
         }
 
-        LazyColumn(
+        val weights = listOf(0.6f, 2.0f, 1.4f, 1.4f, 1.0f, 1.0f, 1.0f)
+
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(8.dp)
         ) {
-            items(tabState.items) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onProductClick(item.id) },
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Top ${item.top}", fontWeight = FontWeight.Bold)
-                        Text(item.nombre, fontWeight = FontWeight.SemiBold)
-                        Text("Autor: ${item.autor.ifBlank { "-" }}")
-                        Text("Categoría: ${item.categoria.ifBlank { "-" }}")
-                        Text("Precio: ${item.precio?.let { "S/ $it" } ?: "-"}")
-                        Text("N.º calificaciones: ${item.numCalificaciones}")
-                        Text("Promedio: ${item.promedio}")
+            TableHeader(
+                headers = listOf(
+                    "#",
+                    "Producto",
+                    "Autor",
+                    "Categoría",
+                    "Precio",
+                    "Calif.",
+                    "Prom."
+                ),
+                weights = weights
+            )
+
+            Divider()
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(tabState.items) { item ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onProductClick(item.id) },
+                    ) {
+                        TableRowText(
+                            texts = listOf(
+                                item.top.toString(),
+                                item.nombre,
+                                item.autor.ifBlank { "-" },
+                                item.categoria.ifBlank { "-" },
+                                item.precio?.let { "S/ $it" } ?: "-",
+                                item.numCalificaciones.toString(),
+                                item.promedio.toString()
+                            ),
+                            weights = weights
+                        )
                     }
+                    Divider()
                 }
             }
         }
@@ -211,6 +348,10 @@ private fun RankingProductosMejorCalificadosSection(
         PagerControls(tabState.page, tabState.totalPages, onPageChange)
     }
 }
+
+/* --------------------------------------------------------------------- */
+/*  PAGINACIÓN (igual que antes)                                        */
+/* --------------------------------------------------------------------- */
 
 @Composable
 private fun PagerControls(
