@@ -34,12 +34,26 @@ fun ProductDetailScreen(
 ) {
     val state = viewModel.uiState
     val downloadState = viewModel.downloadState
+    val commentState = viewModel.commentUiState
+    val ratingState = viewModel.ratingUiState
+    val purchaseState = viewModel.purchaseUiState
     val context = LocalContext.current
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,   // 🔹 Fondo oscuro global
         topBar = {
             TopAppBar(
-                title = { Text(state.detail?.detail?.nombre ?: "Detalle del producto") },
+                title = {
+                    Text(
+                        state.detail?.detail?.nombre ?: "Detalle del producto",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,          // barra oscura
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary   // links tipo “Inicio, Ranking…”
+                ),
                 actions = {
                     TextButton(onClick = onGoHome) { Text("Inicio") }
                     TextButton(onClick = onGoRanking) { Text("Ranking") }
@@ -57,9 +71,12 @@ fun ProductDetailScreen(
                         .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
+
             state.error != null -> {
                 Box(
                     modifier = Modifier
@@ -73,28 +90,73 @@ fun ProductDetailScreen(
                             color = MaterialTheme.colorScheme.error,
                         )
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = { viewModel.load() }) {
+                        Button(
+                            onClick = { viewModel.load() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
                             Text("Reintentar")
                         }
                     }
                 }
             }
+
             else -> {
                 val detail = state.detail!!
-                ProductDetailContent(
-                    modifier = Modifier.padding(padding),
-                    detail = detail,
-                    downloadState = downloadState,
-                    onDownloadTtl = {
-                        // RDF sigue abriéndose en navegador (si quieres igual descargarlo, se puede hacer similar)
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(detail.detail.urlTtl))
-                        context.startActivity(intent)
-                    },
-                    onDownloadProducto = {
-                        // ✅ ahora descargamos vía API propia
-                        viewModel.downloadProduct()
+                Box(modifier = Modifier.padding(padding)) {
+
+                    ProductDetailContent(
+                        detail = detail,
+                        downloadState = downloadState,
+                        purchaseState = purchaseState,
+                        onDownloadTtl = {
+                            val intent =
+                                Intent(Intent.ACTION_VIEW, Uri.parse(detail.detail.urlTtl))
+                            context.startActivity(intent)
+                        },
+                        onDownloadProducto = {
+                            viewModel.downloadProduct()
+                        },
+                        onBuyClick = { viewModel.buyProduct() },
+                        onRateClick = { viewModel.openRatingDialog() },
+                        onCommentClick = { viewModel.openCommentDialog() },
+                    )
+
+                    if (commentState.showDialog) {
+                        CommentDialog(
+                            state = commentState,
+                            onTextChange = viewModel::onCommentTextChange,
+                            onDismiss = {
+                                if (!commentState.sending) {
+                                    viewModel.dismissCommentDialog()
+                                }
+                            },
+                            onSend = {
+                                if (!commentState.sending) {
+                                    viewModel.sendComment()
+                                }
+                            }
+                        )
                     }
-                )
+
+                    if (ratingState.showDialog) {
+                        RatingDialog(
+                            state = ratingState,
+                            onRatingSelected = viewModel::onRatingSelected,
+                            onDismiss = {
+                                if (!ratingState.sending) {
+                                    viewModel.dismissRatingDialog()
+                                }
+                            },
+                            onSend = {
+                                if (!ratingState.sending) {
+                                    viewModel.sendRating()
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -105,8 +167,12 @@ private fun ProductDetailContent(
     modifier: Modifier = Modifier,
     detail: ProductDetailResult,
     downloadState: ProductDetailDownloadState,
+    purchaseState: PurchaseUiState,
     onDownloadTtl: () -> Unit,
     onDownloadProducto: () -> Unit,
+    onBuyClick: () -> Unit,
+    onRateClick: () -> Unit,
+    onCommentClick: () -> Unit,
 ) {
     val p = detail.detail
     val comments = detail.comments
@@ -124,13 +190,20 @@ private fun ProductDetailContent(
     ) {
         // ===== Card principal: imagen + descripción =====
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant    // 🔹 card oscuro como la web
+            )
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = p.nombre, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = p.nombre,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
                 if (selectedImage != null) {
                     AsyncImage(
@@ -163,6 +236,9 @@ private fun ProductDetailContent(
                                 modifier = Modifier
                                     .size(70.dp)
                                     .clickable { selectedImage = url },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 AsyncImage(
@@ -179,6 +255,7 @@ private fun ProductDetailContent(
                 Text(
                     text = p.descripcion,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
@@ -186,7 +263,10 @@ private fun ProductDetailContent(
 
         // ===== Card: Precio + saldo + Comprar / Ya comprado =====
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -196,9 +276,14 @@ private fun ProductDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Precio:", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Precio:",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     Text(
                         text = p.precio?.let { "S/ %.2f".format(it) } ?: "-",
+                        color = MaterialTheme.colorScheme.primary    // 🔹 como acento
                     )
                 }
 
@@ -207,26 +292,59 @@ private fun ProductDetailContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Tu saldo:", fontWeight = FontWeight.Bold)
-                        Text("S/ %.2f".format(saldo))
+                        Text(
+                            "Tu saldo:",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "S/ %.2f".format(saldo),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
 
                 if (!p.mostrarAcciones) {
                     Button(
-                        onClick = { /* TODO: Comprar producto vía API */ },
+                        onClick = onBuyClick,
+                        enabled = !purchaseState.buying,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
-                        Text("Comprar")
+                        Text(
+                            if (purchaseState.buying) "Comprando..."
+                            else "Comprar"
+                        )
                     }
                 } else {
                     Text(
                         text = "Ya compraste este producto.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.primary,   // 🔹 mensaje en color acento
                         modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+
+                purchaseState.error?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+
+                purchaseState.success?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
                     )
                 }
             }
@@ -234,7 +352,10 @@ private fun ProductDetailContent(
 
         // ===== Card: rating + metadatos + RDF / Descargar =====
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -252,7 +373,10 @@ private fun ProductDetailContent(
                     )
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                Divider(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
 
                 InfoRow("Autor", p.autor)
                 InfoRow("Versión", p.version)
@@ -268,6 +392,9 @@ private fun ProductDetailContent(
                     OutlinedButton(
                         onClick = onDownloadTtl,
                         modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Text("Descargar RDF (.ttl)")
                     }
@@ -277,6 +404,9 @@ private fun ProductDetailContent(
                             onClick = onDownloadProducto,
                             modifier = Modifier.weight(1f),
                             enabled = !downloadState.downloading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
                         ) {
                             Text(
                                 if (downloadState.downloading)
@@ -288,7 +418,6 @@ private fun ProductDetailContent(
                     }
                 }
 
-                // Mensajes de estado de descarga
                 downloadState.error?.let { err ->
                     Text(
                         text = err,
@@ -302,6 +431,7 @@ private fun ProductDetailContent(
                     Text(
                         text = "Archivo descargado en:\n${file.absolutePath}",
                         style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
                     )
                 }
@@ -311,22 +441,35 @@ private fun ProductDetailContent(
         // ===== Card de acciones: Calificar / Comentar (solo si ya compró) =====
         if (p.mostrarAcciones) {
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Acciones", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Acciones",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     OutlinedButton(
-                        onClick = { /* TODO: pantalla Calificar */ },
+                        onClick = onRateClick,
                         modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Text("Calificar")
                     }
                     OutlinedButton(
-                        onClick = { /* TODO: pantalla Comentar */ },
+                        onClick = onCommentClick,
                         modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Text("Comentar")
                     }
@@ -338,6 +481,7 @@ private fun ProductDetailContent(
         Text(
             text = "Comentarios",
             style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(top = 8.dp),
         )
 
@@ -359,13 +503,158 @@ private fun ProductDetailContent(
 }
 
 @Composable
+private fun CommentDialog(
+    state: CommentUiState,
+    onTextChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSend: () -> Unit,
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,   // modal oscuro
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "Nuevo comentario",
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = state.text,
+                    onValueChange = onTextChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Escribe tu comentario") },
+                    minLines = 3,
+                    maxLines = 5,
+                )
+                state.error?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                state.success?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSend, enabled = !state.sending) {
+                if (state.sending) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Text("Enviar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.sending) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun RatingDialog(
+    state: RatingUiState,
+    onRatingSelected: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    onSend: () -> Unit,
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "Calificar producto",
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    (1..5).forEach { star ->
+                        val filled = star <= state.selectedRating
+                        Text(
+                            text = if (filled) "★" else "☆",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = if (filled)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .clickable { onRatingSelected(star) }
+                        )
+                    }
+                }
+
+                state.error?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                state.success?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSend, enabled = !state.sending) {
+                if (state.sending) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Text("Calificar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.sending) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
 private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text("$label:", fontWeight = FontWeight.Bold)
-        Text(value)
+        Text(
+            "$label:",
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            value,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -377,8 +666,14 @@ private fun RatingStars(rating: Double) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("★".repeat(full) + "☆".repeat(empty))
-        Text("(${String.format("%.1f", rating)})")
+        Text(
+            "★".repeat(full) + "☆".repeat(empty),
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            "(${String.format("%.1f", rating)})",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -386,6 +681,9 @@ private fun RatingStars(rating: Double) {
 private fun CommentCard(comment: ProductComment) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -397,16 +695,24 @@ private fun CommentCard(comment: ProductComment) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(comment.cliente, fontWeight = FontWeight.Bold)
+                    Text(
+                        comment.cliente,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(Modifier.width(8.dp))
                     RatingStars(rating = comment.calificacion.toDouble())
                 }
                 Text(
                     text = comment.fecha ?: "",
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(comment.descripcion)
+            Text(
+                comment.descripcion,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

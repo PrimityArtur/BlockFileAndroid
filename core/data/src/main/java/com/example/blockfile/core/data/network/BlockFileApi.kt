@@ -1,14 +1,18 @@
 package com.example.blockfile.core.data.network
 
 import com.example.blockfile.core.model.CatalogResponseDto
+import com.example.blockfile.core.model.CommentRequestDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
 import com.example.blockfile.core.model.ProductDetailResponseDto
+import com.example.blockfile.core.model.PurchaseResponseDto
 import com.example.blockfile.core.model.RankingMejoresCompradoresResponseDto
 import com.example.blockfile.core.model.RankingProductosMasCompradosResponseDto
 import com.example.blockfile.core.model.RankingProductosMejorCalificadosResponseDto
+import com.example.blockfile.core.model.RatingRequestDto
 import com.example.blockfile.core.model.RegisterRequest
 import com.example.blockfile.core.model.RegisterResponse
+import com.example.blockfile.core.model.SimpleResponseDto
 import retrofit2.Response
 import okhttp3.ResponseBody
 import retrofit2.http.Body
@@ -66,4 +70,22 @@ interface BlockFileApi {
     suspend fun downloadProduct(
         @Path("id") id: Long,
     ): Response<ResponseBody>
+
+    @POST("apimovil/productos/{id}/comentar/")
+    suspend fun commentProduct(
+        @Path("id") id: Long,
+        @Body body: CommentRequestDto,
+    ): SimpleResponseDto
+
+    @POST("apimovil/productos/{id}/calificar/")
+    suspend fun rateProduct(
+        @Path("id") id: Long,
+        @Body body: RatingRequestDto,
+    ): SimpleResponseDto
+
+
+    @POST("apimovil/productos/{id}/comprar/")
+    suspend fun buyProduct(
+        @Path("id") id: Long,
+    ): PurchaseResponseDto
 }
