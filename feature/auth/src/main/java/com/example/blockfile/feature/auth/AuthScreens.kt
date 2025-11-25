@@ -14,35 +14,27 @@ import androidx.compose.ui.unit.dp
 fun LoginScreen(
     viewModel: AuthViewModel,
     onGoToRegister: () -> Unit,
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccess: (esAdmin: Boolean) -> Unit,
 ) {
     val state = viewModel.loginState
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(0.95f),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Iniciar sesión",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface)
+                Text("Iniciar sesión", style = MaterialTheme.typography.headlineMedium)
 
                 OutlinedTextField(
                     value = state.nombre,
@@ -63,7 +55,7 @@ fun LoginScreen(
 
                 if (state.error != null) {
                     Text(
-                        text = state.error,
+                        text = state.error ?: "",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -71,12 +63,12 @@ fun LoginScreen(
 
                 Button(
                     onClick = { viewModel.login(onLoginSuccess) },
-                    enabled = !state.loading,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.loading
                 ) {
                     if (state.loading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp
                         )
                     } else {

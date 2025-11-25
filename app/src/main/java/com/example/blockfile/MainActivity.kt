@@ -68,12 +68,10 @@ fun BlockFileNavHost(
         composable(Routes.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
-                onGoToRegister = {
-                    navController.navigate(Routes.Register.route)
-                },
-                onLoginSuccess = { tipoUsuario ->
-                    if (tipoUsuario == "administrador") {
-                        navController.navigate("adminHome") {
+                onGoToRegister = { navController.navigate("register") },
+                onLoginSuccess = { esAdmin ->
+                    if (esAdmin) {
+                        navController.navigate("admin/profile") {
                             popUpTo("login") { inclusive = true }
                         }
                     } else {
@@ -175,21 +173,76 @@ fun BlockFileNavHost(
         }
 
         // ============= PERFIL / PANEL ADMIN =============
-        composable("adminHome") {
+        composable("admin/profile") {
             val vm: AdminProfileViewModel = hiltViewModel()
-
-            val authVm: AuthViewModel = hiltViewModel()
-            val idUsuario = authVm.loginState.idUsuario ?: 0L
+            val idUsuario = authViewModel.loginState.idUsuario ?: 0L
 
             AdminProfileScreen(
                 viewModel = vm,
                 idUsuario = idUsuario,
+                onGoPerfil = { /* ya estás en Perfil */ },
+                onGoInventario = { navController.navigate("admin/inventario") },
+                onGoCategorias = { navController.navigate("admin/categorias") },
+                onGoUsuarios = { navController.navigate("admin/usuarios") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
             )
+        }
+
+        composable("admin/inventario") {
+            // aquí luego puedes llamar a tu pantalla de adminProducts
+            // de momento, un placeholder si aún no lo has hecho
+            AdminSectionPlaceholderScreen(
+                title = "Inventario",
+                onBackToPerfil = { navController.navigate("admin/profile") }
+            )
+        }
+
+        composable("admin/categorias") {
+            AdminSectionPlaceholderScreen(
+                title = "Categorías",
+                onBackToPerfil = { navController.navigate("admin/profile") }
+            )
+        }
+
+        composable("admin/usuarios") {
+            AdminSectionPlaceholderScreen(
+                title = "Usuarios",
+                onBackToPerfil = { navController.navigate("admin/profile") }
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminSectionPlaceholderScreen(
+    title: String,
+    onBackToPerfil: () -> Unit,
+) {
+    // Un placeholder simple; luego lo reemplazas por adminProducts/adminUsers reales
+    androidx.compose.material3.Scaffold(
+        topBar = {
+            androidx.compose.material3.TopAppBar(
+                title = { androidx.compose.material3.Text(title) }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = androidx.compose.ui.Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        ) {
+            androidx.compose.material3.Text("Zona de administración: $title")
+            androidx.compose.material3.Button(onClick = onBackToPerfil) {
+                androidx.compose.material3.Text("Volver a Perfil")
+            }
         }
     }
 }

@@ -2,27 +2,43 @@ package com.example.blockfile.feature.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.blockfile.core.ui.theme.BlockFileTheme  // si la necesitas
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminProfileScreen(
     viewModel: AdminProfileViewModel,
-    idUsuario: Long,                    // lo pasas desde el login o prefs
+    idUsuario: Long,
+    onGoPerfil: () -> Unit,
+    onGoInventario: () -> Unit,
+    onGoCategorias: () -> Unit,
+    onGoUsuarios: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val state = viewModel.uiState
+    var isEditing by remember { mutableStateOf(false) }
+
+    var nombre by remember(state.nombre) { mutableStateOf(state.nombre) }
+    var correo by remember(state.correo) { mutableStateOf(state.correo) }
+    var contrasena by remember(state.contrasena) { mutableStateOf(state.contrasena) }
 
     LaunchedEffect(idUsuario) {
-        viewModel.loadInitial(idUsuario)
+        if (idUsuario != 0L) {
+            viewModel.loadProfile(idUsuario)
+        }
+    }
+
+    // Sincronizar cuando el ViewModel se actualice
+    LaunchedEffect(state.idUsuario, state.nombre, state.correo, state.contrasena) {
+        nombre = state.nombre
+        correo = state.correo
+        contrasena = state.contrasena
     }
 
     Column(
@@ -30,218 +46,198 @@ fun AdminProfileScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Header similar al HeaderAdministrador.html
+
+        // ===== HEADER ARRIBA (similar a ProfileScreen, pero con opciones de admin) =====
         TopAppBar(
             title = {
                 Text(
-                    text = "BlockFile - Admin",
+                    text = "BlockFile",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
             },
             actions = {
-                TextButton(onClick = onLogout) {
-                    Text("Cerrar sesión")
+                TextButton(onClick = onGoPerfil) {
+                    Text("Perfil")
+                }
+                TextButton(onClick = onGoInventario) {
+                    Text("Inventario")
+                }
+                TextButton(onClick = onGoCategorias) {
+                    Text("Categorías")
+                }
+                TextButton(onClick = onGoUsuarios) {
+                    Text("Usuarios")
                 }
             }
         )
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
 
-            Text(
-                text = "Perfil del Administrador",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            item {
+                // Título principal
+                Text(
+                    text = "Perfil del Administrador",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-            if (state.loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+                if (state.loading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
 
-            // Errores (igual que card "Errores" en web)
-            state.error?.let { err ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                // Bloque de errores tipo card (similar al perfil cliente)
+                state.error?.let { err ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Errores:",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = err,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Errores:",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = err,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
-            }
 
-            // Mensaje de éxito (success)
-            state.success?.let { msg ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                // Mensaje de éxito sencillo debajo del título
+                state.success?.let { msg ->
                     Text(
                         text = msg,
-                        modifier = Modifier.padding(12.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-            }
 
-            AdminPerfilFormCard(
-                state = state,
-                onNombreChange = viewModel::onNombreChange,
-                onCorreoChange = viewModel::onCorreoChange,
-                onContrasenaChange = viewModel::onContrasenaChange,
-                onGuardar = viewModel::guardarCambios,
-            )
-        }
-    }
-}
-
-/**
- * Card que replica el formulario de PerfilAdministrador.html:
- * - ID deshabilitado
- * - Nombre, Correo, Contraseña con readonly y modo edición
- * - Botones: Editar información / Guardar / Cancelar
- */
-@Composable
-private fun AdminPerfilFormCard(
-    state: AdminProfileUiState,
-    onNombreChange: (String) -> Unit,
-    onCorreoChange: (String) -> Unit,
-    onContrasenaChange: (String) -> Unit,
-    onGuardar: () -> Unit,
-) {
-    val id = state.idUsuario ?: return
-
-    var isEditing by remember { mutableStateOf(false) }
-
-    // Valores originales para Cancelar
-    var originalNombre by remember { mutableStateOf(state.nombre) }
-    var originalCorreo by remember { mutableStateOf(state.correo) }
-    var originalPass by remember { mutableStateOf(state.contrasena) }
-
-    // Cuando hay éxito, volvemos a modo lectura y actualizamos originales
-    LaunchedEffect(state.success) {
-        if (state.success != null) {
-            isEditing = false
-            originalNombre = state.nombre
-            originalCorreo = state.correo
-            originalPass = state.contrasena
-        }
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-
-            // ID (disabled)
-            OutlinedTextField(
-                value = id.toString(),
-                onValueChange = {},
-                label = { Text("ID") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = false
-            )
-
-            // Nombre
-            OutlinedTextField(
-                value = state.nombre,
-                onValueChange = { if (isEditing) onNombreChange(it) },
-                label = { Text("Nombre") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isEditing && !state.saving
-            )
-
-            // Correo
-            OutlinedTextField(
-                value = state.correo,
-                onValueChange = { if (isEditing) onCorreoChange(it) },
-                label = { Text("Correo") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isEditing && !state.saving
-            )
-
-            // Contraseña
-            OutlinedTextField(
-                value = state.contrasena,
-                onValueChange = { if (isEditing) onContrasenaChange(it) },
-                label = { Text("Contraseña") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isEditing && !state.saving
-            )
-
-            // Botones estilo PerfilAdministrador.html
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                if (!isEditing) {
-                    Button(
-                        onClick = {
-                            isEditing = true
-                            originalNombre = state.nombre
-                            originalCorreo = state.correo
-                            originalPass = state.contrasena
-                        },
-                        enabled = !state.saving
+                // ===== CARD DE DATOS DEL ADMIN (similar a PerfilFormCard) =====
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Editar")
-                    }
-                } else {
+                        OutlinedTextField(
+                            value = state.idUsuario?.toString() ?: "",
+                            onValueChange = {},
+                            label = { Text("ID") },
+                            enabled = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = { onGuardar() },
-                            enabled = !state.saving
+                        OutlinedTextField(
+                            value = nombre,
+                            onValueChange = { if (isEditing) nombre = it },
+                            label = { Text("Nombre de usuario") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = isEditing && !state.saving,
+                        )
+
+                        OutlinedTextField(
+                            value = correo,
+                            onValueChange = { if (isEditing) correo = it },
+                            label = { Text("Correo") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = isEditing && !state.saving,
+                        )
+
+                        OutlinedTextField(
+                            value = contrasena,
+                            onValueChange = { if (isEditing) contrasena = it },
+                            label = { Text("Contraseña") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = isEditing && !state.saving,
+                        )
+
+                        // Botones Editar / Guardar / Cancelar alineados a la derecha
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
                         ) {
-                            if (state.saving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(end = 4.dp),
-                                    strokeWidth = 2.dp
-                                )
+                            if (!isEditing) {
+                                Button(
+                                    onClick = { isEditing = true },
+                                    enabled = !state.loading && state.idUsuario != null
+                                ) {
+                                    Text("Editar")
+                                }
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            viewModel.onNombreChange(nombre)
+                                            viewModel.onCorreoChange(correo)
+                                            viewModel.onContrasenaChange(contrasena)
+                                            viewModel.saveProfile()
+                                            isEditing = false
+                                        },
+                                        enabled = !state.saving
+                                    ) {
+                                        if (state.saving) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .size(18.dp)
+                                                    .padding(end = 4.dp),
+                                                strokeWidth = 2.dp
+                                            )
+                                        }
+                                        Text("Guardar")
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            // Revertir a valores del ViewModel
+                                            nombre = state.nombre
+                                            correo = state.correo
+                                            contrasena = state.contrasena
+                                            isEditing = false
+                                        },
+                                        enabled = !state.saving
+                                    ) {
+                                        Text("Cancelar")
+                                    }
+                                }
                             }
-                            Text("Guardar")
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                onNombreChange(originalNombre)
-                                onCorreoChange(originalCorreo)
-                                onContrasenaChange(originalPass)
-                                isEditing = false
-                            },
-                            enabled = !state.saving
-                        ) {
-                            Text("Cancelar")
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ===== Botón rojo de cerrar sesión (lo mantenemos) =====
+                Button(
+                    onClick = onLogout,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cerrar sesión")
                 }
             }
         }

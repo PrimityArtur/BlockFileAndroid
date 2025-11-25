@@ -1,3 +1,4 @@
+// feature/profile/src/main/java/com/example/blockfile/feature/profile/AdminProfileViewModel.kt
 package com.example.blockfile.feature.profile
 
 import androidx.compose.runtime.getValue
@@ -30,33 +31,30 @@ class AdminProfileViewModel @Inject constructor(
     var uiState by mutableStateOf(AdminProfileUiState())
         private set
 
-    // En tu flujo real, este id debería venir del login (guardado en prefs, etc.)
-    fun loadInitial(idUsuario: Long) {
-        // Evitar recarga si ya lo tenemos
-        if (uiState.idUsuario != null) return
-
+    fun loadProfile(idUsuario: Long) {
+        if (uiState.loading) return
         viewModelScope.launch {
             uiState = uiState.copy(loading = true, error = null, success = null)
             try {
                 val dto = api.getAdminProfile(idUsuario)
                 uiState = uiState.copy(
+                    loading = false,
                     idUsuario = dto.id_usuario,
                     nombre = dto.nombre,
                     correo = dto.correo,
                     contrasena = dto.contrasena,
-                    loading = false
                 )
             } catch (e: Exception) {
                 uiState = uiState.copy(
                     loading = false,
-                    error = e.message ?: "Error al cargar perfil"
+                    error = e.message ?: "Error al cargar perfil de administrador"
                 )
             }
         }
     }
 
     fun onNombreChange(value: String) {
-        uiState = uiState.copy(nombre = value.take(10), error = null, success = null)
+        uiState = uiState.copy(nombre = value, error = null, success = null)
     }
 
     fun onCorreoChange(value: String) {
@@ -67,9 +65,9 @@ class AdminProfileViewModel @Inject constructor(
         uiState = uiState.copy(contrasena = value, error = null, success = null)
     }
 
-    fun guardarCambios() {
+    fun saveProfile() {
         val id = uiState.idUsuario ?: return
-
+        if (uiState.saving) return
         viewModelScope.launch {
             uiState = uiState.copy(saving = true, error = null, success = null)
             try {
@@ -79,13 +77,12 @@ class AdminProfileViewModel @Inject constructor(
                     correo = uiState.correo,
                     contrasena = uiState.contrasena,
                 )
-                val actualizado = api.updateAdminProfile(body)
-
+                val updated = api.updateAdminProfile(body)
                 uiState = uiState.copy(
-                    nombre = actualizado.nombre,
-                    correo = actualizado.correo,
-                    contrasena = actualizado.contrasena,
                     saving = false,
+                    nombre = updated.nombre,
+                    correo = updated.correo,
+                    contrasena = updated.contrasena,
                     success = "Datos actualizados correctamente.",
                 )
             } catch (e: Exception) {
