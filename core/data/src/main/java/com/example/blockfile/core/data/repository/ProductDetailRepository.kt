@@ -119,6 +119,7 @@ fun ProductDetailDto.toDomain() = ProductDetail(
     urlDescargar = url_descargar,
 )
 
+
 fun CommentDto.toDomain() = ProductComment(
     cliente = cliente,
     calificacion = calificacion,

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.blockfile.core.data.repository.ProductDetailResult
 import com.example.blockfile.core.model.ProductComment
+import com.example.blockfile.core.ui.theme.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,7 +193,7 @@ private fun ProductDetailContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant    // 🔹 card oscuro como la web
+                containerColor = MaterialTheme.colorScheme.surface    // 🔹 card oscuro como la web
             )
         ) {
             Column(
@@ -265,7 +266,7 @@ private fun ProductDetailContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(
@@ -354,7 +355,7 @@ private fun ProductDetailContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(
@@ -399,42 +400,9 @@ private fun ProductDetailContent(
                         Text("Descargar RDF (.ttl)")
                     }
 
-                    if (p.mostrarAcciones) {
-                        OutlinedButton(
-                            onClick = onDownloadProducto,
-                            modifier = Modifier.weight(1f),
-                            enabled = !downloadState.downloading,
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Text(
-                                if (downloadState.downloading)
-                                    "Descargando..."
-                                else
-                                    "Descargar producto"
-                            )
-                        }
-                    }
                 }
 
-                downloadState.error?.let { err ->
-                    Text(
-                        text = err,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
 
-                downloadState.lastDownloadedFile?.let { file ->
-                    Text(
-                        text = "Archivo descargado en:\n${file.absolutePath}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
             }
         }
 
@@ -443,7 +411,7 @@ private fun ProductDetailContent(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
@@ -455,6 +423,22 @@ private fun ProductDetailContent(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    OutlinedButton(
+                        onClick = onDownloadProducto,
+                        enabled = !downloadState.downloading,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            if (downloadState.downloading)
+                                "Descargando..."
+                            else
+                                "Descargar"
+                        )
+                    }
+
                     OutlinedButton(
                         onClick = onRateClick,
                         modifier = Modifier.fillMaxWidth(),
@@ -472,6 +456,24 @@ private fun ProductDetailContent(
                         )
                     ) {
                         Text("Comentar")
+                    }
+
+                    downloadState.error?.let { err ->
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+
+                    downloadState.lastDownloadedFile?.let { file ->
+                        Text(
+                            text = "Archivo descargado en:\n${file.absolutePath}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
                     }
                 }
             }
@@ -593,7 +595,7 @@ private fun RatingDialog(
                             text = if (filled) "★" else "☆",
                             style = MaterialTheme.typography.headlineMedium,
                             color = if (filled)
-                                MaterialTheme.colorScheme.primary
+                                Warning
                             else
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
@@ -668,11 +670,7 @@ private fun RatingStars(rating: Double) {
     ) {
         Text(
             "★".repeat(full) + "☆".repeat(empty),
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            "(${String.format("%.1f", rating)})",
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Warning
         )
     }
 }
@@ -682,25 +680,27 @@ private fun CommentCard(comment: ProductComment) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.padding(0.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         comment.cliente,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(Modifier.width(8.dp))
                     RatingStars(rating = comment.calificacion.toDouble())
                 }
                 Text(

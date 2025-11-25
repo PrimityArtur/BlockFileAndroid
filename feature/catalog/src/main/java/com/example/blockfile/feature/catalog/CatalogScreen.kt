@@ -16,6 +16,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import com.example.blockfile.core.ui.theme.TextMuted
+import com.example.blockfile.core.ui.theme.Warning
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(
@@ -157,75 +160,157 @@ fun CatalogScreen(
         }
     }
 }
-
 @Composable
 fun CatalogItemCard(
     producto: ProductoCatalogo,
     onClick: () -> Unit,
-    ) {
-    // Construimos la URL de la imagen solo si hay imagenId
+) {
     val imageUrl = producto.imagenId?.let {
         "https://blockfile.up.railway.app/apimovil/catalogo/imagen/$it/"
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ===== IMAGEN A LA IZQUIERDA =====
-            if (imageUrl != null) {
-                coil.compose.AsyncImage(
-                    model = imageUrl,
-                    contentDescription = "Imagen de ${producto.nombre}",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
+            // ===== IMAGEN ARRIBA (figure) =====
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (imageUrl != null) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Imagen de ${producto.nombre}",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Sin imagen",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
-            // ===== TEXTO A LA DERECHA =====
+            // ===== BODY=====
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    producto.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    "Autor: ${producto.autor}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    "Precio: S/ ${"%.2f".format(producto.precio)}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    "Compras: ${producto.compras}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                producto.calificacionPromedio?.let {
+                // ---- Fila 1: título + rating  ----
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        "Calificación: ${"%.1f".format(it)} ★",
-                        style = MaterialTheme.typography.bodySmall
+                        text = producto.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(2f)
+                    )
+
+                    RatingStarsCompact(
+                        rating = producto.calificacionPromedio ?: 0.0
+                    )
+                }
+
+                // ---- Fila 2: Por: autor (catalog-card__desc) ----
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Por: ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = producto.autor.ifBlank { "-" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // ---- Fila 3: Precio + compras (catalog-card__row meta) ----
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = buildString {
+                            append("Precio: ")
+                            append(
+                                if (producto.precio != null)
+                                    "S/ ${"%.2f".format(producto.precio)}"
+                                else
+                                    "-"
+                            )
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextMuted,
+
+//                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "${producto.compras} compras",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun RatingStarsCompact(rating: Double) {
+    val safeRating = rating.coerceIn(0.0, 5.0)
+    val full = safeRating.toInt()
+    val hasHalf = (safeRating - full) >= 0.5 && full < 5
+    val empty = 5 - full - if (hasHalf) 1 else 0
+
+    val stars = buildString {
+        append("★".repeat(full))
+        if (hasHalf) append("★")
+        append("☆".repeat(empty))
+    }
+
+    Text(
+        text = stars,
+        style = MaterialTheme.typography.bodySmall,
+        color = Warning
+    )
 }
