@@ -18,6 +18,8 @@ data class AuthUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val success: Boolean = false,
+    val tipoUsuario: String? = null,   // "cliente" o "administrador"
+    val idUsuario: Long? = null,
 )
 
 @HiltViewModel
@@ -26,7 +28,6 @@ class AuthViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
 ) : ViewModel() {
 
-    // 👇 AHORA SÍ son estados observables por Compose
     var loginState by mutableStateOf(AuthUiState())
         private set
 
@@ -42,14 +43,22 @@ class AuthViewModel @Inject constructor(
         loginState = loginState.copy(contrasena = value, error = null)
     }
 
-    fun login(onSuccess: () -> Unit) {
+    fun login(onSuccess: (String) -> Unit) {
         viewModelScope.launch {
             loginState = loginState.copy(loading = true, error = null)
             try {
                 val res = loginUseCase(loginState.nombre, loginState.contrasena)
-                // aquí podrías guardar el usuario en DataStore
-                loginState = loginState.copy(loading = false, success = true)
-                onSuccess()
+
+                // Guardamos info básica del usuario logueado
+                loginState = loginState.copy(
+                    loading = false,
+                    success = true,
+                    tipoUsuario = res.tipo,
+                    idUsuario = res.id_usuario
+                )
+
+                // notificamos el tipo al NavHost
+                onSuccess(res.tipo)
             } catch (e: Exception) {
                 loginState = loginState.copy(
                     loading = false,

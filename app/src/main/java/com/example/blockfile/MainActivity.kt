@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -25,6 +24,12 @@ import com.example.blockfile.feature.profile.ProfileViewModel
 import com.example.blockfile.feature.rankings.RankingsScreen
 import com.example.blockfile.feature.rankings.RankingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.material3.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.example.blockfile.feature.profile.AdminProfileScreen
+import com.example.blockfile.feature.profile.AdminProfileViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -43,9 +48,11 @@ class MainActivity : ComponentActivity() {
 sealed class Routes(val route: String) {
     data object Login : Routes("login")
     data object Register : Routes("register")
-    // luego agregarás Home, etc.
 }
 
+// =========================================================
+//                      NAVIGATION
+// =========================================================
 @Composable
 fun BlockFileNavHost(
     navController: NavHostController,
@@ -56,20 +63,29 @@ fun BlockFileNavHost(
         navController = navController,
         startDestination = Routes.Login.route
     ) {
+
+        // ============= LOGIN =============
         composable(Routes.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
                 onGoToRegister = {
                     navController.navigate(Routes.Register.route)
                 },
-                onLoginSuccess = {
-                    navController.navigate("catalog") {
-                        popUpTo("login") { inclusive = true }
+                onLoginSuccess = { tipoUsuario ->
+                    if (tipoUsuario == "administrador") {
+                        navController.navigate("adminHome") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("catalog") {
+                            popUpTo("login") { inclusive = true }
+                        }
                     }
                 }
             )
         }
 
+        // ============= REGISTER =============
         composable(Routes.Register.route) {
             RegisterScreen(
                 viewModel = authViewModel,
@@ -77,22 +93,20 @@ fun BlockFileNavHost(
                     navController.popBackStack()
                 },
                 onRegisterSuccess = {
-                    // luego de registro exitoso puedes volver al login
                     navController.popBackStack()
                 }
             )
         }
 
-
+        // ============= CATALOGO =============
         composable("catalog") {
             val vm: CatalogViewModel = hiltViewModel()
             CatalogScreen(
                 viewModel = vm,
-                onGoHome = { /* ya estás en catálogo, no hace nada o recarga */ },
+                onGoHome = {},
                 onGoRanking = { navController.navigate("ranking") },
                 onGoPerfil = { navController.navigate("perfil") },
                 onLogout = {
-                    // limpiar user guardado (si lo usas) y volver al login
                     navController.navigate("login") {
                         popUpTo("catalog") { inclusive = true }
                     }
@@ -103,12 +117,13 @@ fun BlockFileNavHost(
             )
         }
 
+        // ============= RANKINGS =============
         composable("ranking") {
             val vm: RankingsViewModel = hiltViewModel()
             RankingsScreen(
                 viewModel = vm,
                 onGoHome = { navController.navigate("catalog") },
-                onGoPerfil = { navController.navigate("perfil")  },
+                onGoPerfil = { navController.navigate("perfil") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo("ranking") { inclusive = true }
@@ -120,6 +135,7 @@ fun BlockFileNavHost(
             )
         }
 
+        // ============= PRODUCT DETAIL =============
         composable(
             route = "productdetail/{productId}",
             arguments = listOf(
@@ -131,7 +147,7 @@ fun BlockFileNavHost(
                 viewModel = vm,
                 onGoHome = { navController.navigate("catalog") },
                 onGoRanking = { navController.navigate("ranking") },
-                onGoPerfil = { navController.navigate("perfil")  },
+                onGoPerfil = { navController.navigate("perfil") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
@@ -140,17 +156,13 @@ fun BlockFileNavHost(
             )
         }
 
-        // ============= PERFIL =============
+        // ============= PERFIL CLIENTE =============
         composable("perfil") {
             val vm: ProfileViewModel = hiltViewModel()
             ProfileScreen(
                 viewModel = vm,
-                onGoHome = {
-                    navController.navigate("catalog")
-                },
-                onGoRankings = {
-                    navController.navigate("ranking")
-                },
+                onGoHome = { navController.navigate("catalog") },
+                onGoRankings = { navController.navigate("ranking") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
@@ -161,6 +173,23 @@ fun BlockFileNavHost(
                 }
             )
         }
-    }
 
+        // ============= PERFIL / PANEL ADMIN =============
+        composable("adminHome") {
+            val vm: AdminProfileViewModel = hiltViewModel()
+
+            val authVm: AuthViewModel = hiltViewModel()
+            val idUsuario = authVm.loginState.idUsuario ?: 0L
+
+            AdminProfileScreen(
+                viewModel = vm,
+                idUsuario = idUsuario,
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+    }
 }

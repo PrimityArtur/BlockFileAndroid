@@ -64,3 +64,12 @@ data class CompraPerfil(
     val calificacionPromedio: Double?,
     val compras: Int,
 )
+
+
+@Serializable
+data class AdminProfileDto(
+    val id_usuario: Long,
+    val nombre: String,
+    val correo: String,
+    val contrasena: String,
+)

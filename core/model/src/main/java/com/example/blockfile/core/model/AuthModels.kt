@@ -15,6 +15,7 @@ data class LoginResponse(
     val correo: String,
     val saldo: String,
     val excliente: Boolean,
+    val tipo: String,
 )
 
 @Serializable

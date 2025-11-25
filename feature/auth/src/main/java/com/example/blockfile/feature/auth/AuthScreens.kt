@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 fun LoginScreen(
     viewModel: AuthViewModel,
     onGoToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (String) -> Unit,
 ) {
     val state = viewModel.loginState
 
