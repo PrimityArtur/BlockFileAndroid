@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -34,6 +33,7 @@ fun ProductDetailScreen(
     onLogout: () -> Unit,
 ) {
     val state = viewModel.uiState
+    val downloadState = viewModel.downloadState
     val context = LocalContext.current
 
     Scaffold(
@@ -84,13 +84,15 @@ fun ProductDetailScreen(
                 ProductDetailContent(
                     modifier = Modifier.padding(padding),
                     detail = detail,
+                    downloadState = downloadState,
                     onDownloadTtl = {
+                        // RDF sigue abriéndose en navegador (si quieres igual descargarlo, se puede hacer similar)
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(detail.detail.urlTtl))
                         context.startActivity(intent)
                     },
                     onDownloadProducto = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(detail.detail.urlDescargar))
-                        context.startActivity(intent)
+                        // ✅ ahora descargamos vía API propia
+                        viewModel.downloadProduct()
                     }
                 )
             }
@@ -102,6 +104,7 @@ fun ProductDetailScreen(
 private fun ProductDetailContent(
     modifier: Modifier = Modifier,
     detail: ProductDetailResult,
+    downloadState: ProductDetailDownloadState,
     onDownloadTtl: () -> Unit,
     onDownloadProducto: () -> Unit,
 ) {
@@ -273,10 +276,34 @@ private fun ProductDetailContent(
                         OutlinedButton(
                             onClick = onDownloadProducto,
                             modifier = Modifier.weight(1f),
+                            enabled = !downloadState.downloading,
                         ) {
-                            Text("Descargar producto")
+                            Text(
+                                if (downloadState.downloading)
+                                    "Descargando..."
+                                else
+                                    "Descargar producto"
+                            )
                         }
                     }
+                }
+
+                // Mensajes de estado de descarga
+                downloadState.error?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+
+                downloadState.lastDownloadedFile?.let { file ->
+                    Text(
+                        text = "Archivo descargado en:\n${file.absolutePath}",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
             }
         }
@@ -383,4 +410,3 @@ private fun CommentCard(comment: ProductComment) {
         }
     }
 }
-

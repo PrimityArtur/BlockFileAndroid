@@ -11,6 +11,10 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import javax.inject.Singleton
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
+import java.util.concurrent.ConcurrentHashMap
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,6 +26,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
+            .cookieJar(InMemoryCookieJar())
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level = HttpLoggingInterceptor.Level.BODY
@@ -46,4 +51,17 @@ object NetworkModule {
     @Singleton
     fun provideBlockFileApi(retrofit: Retrofit): BlockFileApi =
         retrofit.create(BlockFileApi::class.java)
+}
+
+
+class InMemoryCookieJar : CookieJar {
+    private val cookieStore = ConcurrentHashMap<String, List<Cookie>>()
+
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        cookieStore[url.host] = cookies
+    }
+
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        return cookieStore[url.host] ?: emptyList()
+    }
 }

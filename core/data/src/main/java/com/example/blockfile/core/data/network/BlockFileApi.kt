@@ -9,11 +9,14 @@ import com.example.blockfile.core.model.RankingProductosMasCompradosResponseDto
 import com.example.blockfile.core.model.RankingProductosMejorCalificadosResponseDto
 import com.example.blockfile.core.model.RegisterRequest
 import com.example.blockfile.core.model.RegisterResponse
+import retrofit2.Response
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 interface BlockFileApi {
 
@@ -32,7 +35,6 @@ interface BlockFileApi {
         @Query("autor") autor: String? = null,
         @Query("categoria") categoria: String? = null,
     ): CatalogResponseDto
-
 
 
 
@@ -57,4 +59,11 @@ interface BlockFileApi {
     suspend fun getProductDetail(
         @Path("id") id: Long,
     ): ProductDetailResponseDto
+
+
+    @Streaming
+    @GET("apimovil/productos/{id}/descargar/")
+    suspend fun downloadProduct(
+        @Path("id") id: Long,
+    ): Response<ResponseBody>
 }
