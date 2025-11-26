@@ -8,6 +8,7 @@ import com.example.blockfile.core.model.AdminProfileDto
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.CommentRequestDto
 import com.example.blockfile.core.model.ComprasClienteResponseDto
+import com.example.blockfile.core.model.DeleteCategoryRequestDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
 import com.example.blockfile.core.model.PerfilClienteResponseDto
@@ -21,6 +22,8 @@ import com.example.blockfile.core.model.RegisterRequest
 import com.example.blockfile.core.model.RegisterResponse
 import com.example.blockfile.core.model.SaveAdminProductRequestDto
 import com.example.blockfile.core.model.SaveAdminProductResponseDto
+import com.example.blockfile.core.model.SaveCategoryRequestDto
+import com.example.blockfile.core.model.SaveCategoryResponseDto
 import com.example.blockfile.core.model.SimpleResponseDto
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -189,5 +192,16 @@ interface BlockFileApi {
         @Query("nombre") nombre: String? = null,
         @Query("descripcion") descripcion: String? = null,
     ): AdminCategoriesResponseDto
+
+    @POST("apimovil/admin/categorias/guardar/")
+    suspend fun saveAdminCategory(
+        @Body body: SaveCategoryRequestDto,
+    ): SaveCategoryResponseDto
+
+    @POST("apimovil/admin/categorias/eliminar/")
+    suspend fun deleteAdminCategory(
+        @Body body: DeleteCategoryRequestDto,
+    ): SimpleResponseDto
+
 
 }

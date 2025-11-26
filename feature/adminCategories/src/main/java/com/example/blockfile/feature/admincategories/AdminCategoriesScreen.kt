@@ -30,7 +30,6 @@ fun AdminCategoriesScreen(
                 actions = {
                     TextButton(onClick = onGoPerfil) { Text("Perfil") }
                     TextButton(onClick = onGoInventario) { Text("Inventario") }
-                    // Estamos en Categorías, lo dejamos deshabilitado
                     TextButton(onClick = { /* ya estás en Categorías */ }, enabled = false) {
                         Text("Categorías")
                     }
@@ -42,7 +41,6 @@ fun AdminCategoriesScreen(
         Box(modifier = Modifier.padding(padding)) {
             Column(modifier = Modifier.fillMaxSize()) {
 
-                // Título + botón Agregar (sin funcionalidad por ahora)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -81,6 +79,7 @@ fun AdminCategoriesScreen(
                         onDescripcionChange = viewModel::onDescripcionChange,
                         onBuscar = { viewModel.buscarPrimeraPagina() },
                         onEditClick = { item -> viewModel.onEditClick(item) },
+                        onDeleteClick = { item -> viewModel.onDeleteClick(item) },
                     )
                 }
 
@@ -88,6 +87,33 @@ fun AdminCategoriesScreen(
                     page = state.page,
                     totalPages = state.totalPages,
                     onPageChange = { viewModel.irPagina(it) }
+                )
+            }
+
+            // Modal agregar/editar categoría
+            if (state.showEditDialog) {
+                AdminCategoryEditDialog(
+                    isEdit = state.isEdit,
+                    nombre = state.formNombre,
+                    descripcion = state.formDescripcion,
+                    loading = state.loading,
+                    onNombreChange = viewModel::onFormNombreChange,
+                    onDescripcionChange = viewModel::onFormDescripcionChange,
+                    onDismiss = viewModel::onDismissDialog,
+                    onSubmit = viewModel::onSubmitForm,
+                    onDelete = if (state.isEdit && state.formId != null)
+                    { { viewModel.onDeleteClick(AdminCategoryItem(state.formId, state.formNombre, state.formDescripcion)) } }
+                    else null
+                )
+            }
+
+            // Confirmación de borrado
+            if (state.showDeleteDialog && state.deleteTarget != null) {
+                ConfirmDeleteCategoryDialog(
+                    nombreCategoria = state.deleteTarget.nombre,
+                    loading = state.loading,
+                    onDismiss = viewModel::onDismissDeleteDialog,
+                    onConfirm = viewModel::onConfirmDelete,
                 )
             }
         }
@@ -111,6 +137,7 @@ private fun AdminCategoriesTableWithFiltersSection(
     onDescripcionChange: (String) -> Unit,
     onBuscar: () -> Unit,
     onEditClick: (AdminCategoryItem) -> Unit,
+    onDeleteClick: (AdminCategoryItem) -> Unit,
 ) {
     if (loading) {
         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -124,14 +151,13 @@ private fun AdminCategoriesTableWithFiltersSection(
         )
     }
 
-    val weights = listOf(0.6f, 1.6f, 2.0f, 1.0f) // ID / Nombre / Descripción / Acciones
+    val weights = listOf(0.6f, 1.6f, 2.0f, 1.4f) // ID / Nombre / Descripción / Acciones
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        // Card de filtros (ID, Nombre, Descripción)
         item {
             Card(
                 modifier = Modifier
@@ -193,7 +219,6 @@ private fun AdminCategoriesTableWithFiltersSection(
             }
         }
 
-        // Cabecera tabla
         item {
             TableHeader(
                 headers = listOf("ID", "Nombre", "Descripción", "Acciones"),
@@ -202,7 +227,6 @@ private fun AdminCategoriesTableWithFiltersSection(
             Divider()
         }
 
-        // Filas
         items(items) { item ->
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -210,7 +234,7 @@ private fun AdminCategoriesTableWithFiltersSection(
                 AdminCategoryTableRow(
                     item = item,
                     weights = weights,
-                    onEditClick = { onEditClick(item) }
+                    onEditClick = { onEditClick(item) },
                 )
             }
             Divider()
@@ -301,22 +325,135 @@ private fun AdminCategoryTableRow(
             softWrap = true,
             maxLines = Int.MAX_VALUE
         )
-        Box(
+        Row(
             modifier = Modifier
                 .weight(weights[3])
                 .padding(horizontal = 6.dp),
-            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Botón "Editar" sin lógica todavía
             OutlinedButton(onClick = onEditClick) {
-                Text("Editar")
+                Text("+")
             }
         }
     }
 }
 
 /* --------------------------------------------------------------------- */
-/*  PAGINADOR (copiado del de productos para mantener estilo)            */
+/*  DIALOGO AGREGAR/EDITAR                                               */
+/* --------------------------------------------------------------------- */
+
+@Composable
+private fun AdminCategoryEditDialog(
+    isEdit: Boolean,
+    nombre: String,
+    descripcion: String,
+    loading: Boolean,
+    onNombreChange: (String) -> Unit,
+    onDescripcionChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSubmit: () -> Unit,
+    onDelete: (() -> Unit)? = null, // ← si es edición, vendrá una función; si es agregar, será null
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(if (isEdit) "Editar categoría" else "Agregar categoría")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = onNombreChange,
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = onDescripcionChange,
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+
+        // ----------------- BOTONES DEL DIALOGO -----------------
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Botón eliminar sólo si es edición
+                if (isEdit && onDelete != null) {
+                    TextButton(
+                        onClick = onDelete,
+                        enabled = !loading
+                    ) {
+                        Text("Eliminar")
+                    }
+                }
+
+                TextButton(
+                    onClick = onSubmit,
+                    enabled = !loading
+                ) {
+                    Text("Guardar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !loading
+            ) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+
+/* --------------------------------------------------------------------- */
+/*  DIALOGO CONFIRMACIÓN ELIMINAR                                       */
+/* --------------------------------------------------------------------- */
+
+@Composable
+private fun ConfirmDeleteCategoryDialog(
+    nombreCategoria: String,
+    loading: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Eliminar categoría") },
+        text = {
+            Text("¿Seguro que deseas eliminar la categoría \"$nombreCategoria\"?")
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !loading
+            ) {
+                Text("Eliminar")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !loading
+            ) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+/* --------------------------------------------------------------------- */
+/*  PAGINADOR                                                            */
 /* --------------------------------------------------------------------- */
 
 @Composable
