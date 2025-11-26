@@ -317,7 +317,6 @@ private fun ComprasSection(
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
 
-            // Ya NO usamos LazyColumn aquí, dejamos que scrollee el LazyColumn exterior
             comprasState.items.forEach { item ->
                 CompraItemCard(
                     item = item,
@@ -326,7 +325,7 @@ private fun ComprasSection(
             }
         }
 
-        // Paginador (inspirado en el pager de la web)
+        // ===== PAGINADOR ESTILO GLOBAL =====
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -334,18 +333,42 @@ private fun ComprasSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Página ${comprasState.page} de ${comprasState.totalPages}")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { onPageChange(1) },
+                    enabled = comprasState.page > 1 && !comprasState.loading
+                ) {
+                    Text("« Primero")
+                }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
+                TextButton(
                     onClick = { onPageChange(comprasState.page - 1) },
                     enabled = comprasState.page > 1 && !comprasState.loading
-                ) { Text("Anterior") }
+                ) {
+                    Text("‹ Ant")
+                }
 
-                OutlinedButton(
+                Text(
+                    text = "Página ${comprasState.page} de ${comprasState.totalPages}",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                TextButton(
                     onClick = { onPageChange(comprasState.page + 1) },
                     enabled = comprasState.page < comprasState.totalPages && !comprasState.loading
-                ) { Text("Siguiente") }
+                ) {
+                    Text("Sig ›")
+                }
+
+                TextButton(
+                    onClick = { onPageChange(comprasState.totalPages) },
+                    enabled = comprasState.page < comprasState.totalPages && !comprasState.loading
+                ) {
+                    Text("Último »")
+                }
             }
         }
     }

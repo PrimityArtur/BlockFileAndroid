@@ -46,8 +46,9 @@ fun ProductDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        state.detail?.detail?.nombre ?: "Detalle del producto",
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "BlockFile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -26,12 +26,18 @@ fun AdminCategoriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Panel administrador") },
+                title = {
+                    Text(
+                        text = "BlockFile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
                     TextButton(onClick = onGoPerfil) { Text("Perfil") }
                     TextButton(onClick = onGoInventario) { Text("Inventario") }
                     TextButton(onClick = { /* ya estás en Categorías */ }, enabled = false) {
-                        Text("Categorías")
+                        Text("Categ.")
                     }
                     TextButton(onClick = onGoUsuarios) { Text("Usuarios") }
                 }
@@ -163,6 +169,10 @@ private fun AdminCategoriesTableWithFiltersSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -353,18 +363,29 @@ private fun AdminCategoryEditDialog(
     onDescripcionChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
-    onDelete: (() -> Unit)? = null, // ← si es edición, vendrá una función; si es agregar, será null
+    onDelete: (() -> Unit)? = null,
 ) {
     AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismiss,
         title = {
-            Text(if (isEdit) "Editar categoría" else "Agregar categoría")
+            Text(
+                text = if (isEdit) "Editar categoría" else "Agregar categoría",
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
+                Text(
+                    text = "Datos de la categoría",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = onNombreChange,
@@ -372,6 +393,7 @@ private fun AdminCategoryEditDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = onDescripcionChange,
@@ -380,19 +402,19 @@ private fun AdminCategoryEditDialog(
                 )
             }
         },
-
-        // ----------------- BOTONES DEL DIALOGO -----------------
         confirmButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Botón eliminar sólo si es edición
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // Botón Eliminar solo en modo edición
                 if (isEdit && onDelete != null) {
                     TextButton(
                         onClick = onDelete,
                         enabled = !loading
                     ) {
-                        Text("Eliminar")
+                        Text(
+                            text = "Eliminar",
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
 
@@ -400,7 +422,15 @@ private fun AdminCategoryEditDialog(
                     onClick = onSubmit,
                     enabled = !loading
                 ) {
-                    Text("Guardar")
+                    if (loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Text("Guardar")
+                    }
                 }
             }
         },
@@ -415,7 +445,6 @@ private fun AdminCategoryEditDialog(
     )
 }
 
-
 /* --------------------------------------------------------------------- */
 /*  DIALOGO CONFIRMACIÓN ELIMINAR                                       */
 /* --------------------------------------------------------------------- */
@@ -428,17 +457,37 @@ private fun ConfirmDeleteCategoryDialog(
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismiss,
-        title = { Text("Eliminar categoría") },
+        title = {
+            Text(
+                text = "Eliminar categoría",
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
-            Text("¿Seguro que deseas eliminar la categoría \"$nombreCategoria\"?")
+            Text(
+                text = "¿Seguro que deseas eliminar la categoría \"$nombreCategoria\"?",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
                 enabled = !loading
             ) {
-                Text("Eliminar")
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         dismissButton = {

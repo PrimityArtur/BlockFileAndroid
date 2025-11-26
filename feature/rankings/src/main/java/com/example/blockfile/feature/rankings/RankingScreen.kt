@@ -37,7 +37,13 @@ fun RankingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Rankings") },
+                title = {
+                    Text(
+                        text = "BlockFile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
                     TextButton(onClick = onGoHome) { Text("Inicio") }
                     TextButton(onClick = { /* ya estás en ranking */ }) { Text("Ranking") }

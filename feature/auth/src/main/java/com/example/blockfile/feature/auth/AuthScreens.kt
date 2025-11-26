@@ -21,20 +21,31 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
+            modifier = Modifier.fillMaxWidth(0.95f),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
+
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Iniciar sesión", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = "Iniciar sesión",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
                 OutlinedTextField(
                     value = state.nombre,
@@ -68,7 +79,7 @@ fun LoginScreen(
                 ) {
                     if (state.loading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -83,6 +94,7 @@ fun LoginScreen(
         }
     }
 }
+
 
 @Composable
 fun RegisterScreen(

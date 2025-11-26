@@ -64,11 +64,17 @@ fun AdminProductsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Panel administrador") },
+                title = {
+                    Text(
+                        text = "BlockFile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
                     TextButton(onClick = onGoPerfil) { Text("Perfil") }
                     TextButton(onClick = { /* ya estás en Inventario */ }) { Text("Inventario") }
-                    TextButton(onClick = onGoCategorias) { Text("Categorías") }
+                    TextButton(onClick = onGoCategorias) { Text("Categ.") }
                     TextButton(onClick = onGoUsuarios) { Text("Usuarios") }
                 }
             )
@@ -211,6 +217,10 @@ private fun AdminProductsTableWithFiltersSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -341,7 +351,7 @@ private fun AdminProductTableRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 30.dp, horizontal = 16.dp),
+            .padding(vertical = 16.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -430,18 +440,30 @@ private fun AdminProductEditDialog(
     val scrollState = rememberScrollState()
 
     AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,   // 🔹 como en CommentDialog/RatingDialog
         onDismissRequest = onDismiss,
         title = {
-            Text(if (isEdit) "Editar producto" else "Agregar producto")
+            Text(
+                text = if (isEdit) "Editar producto" else "Agregar producto",
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 500.dp)
                     .verticalScroll(scrollState)
             ) {
+                // ------------ Datos principales ------------
+                Text(
+                    text = "Datos del producto",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = onNombreChange,
@@ -469,6 +491,7 @@ private fun AdminProductEditDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -488,6 +511,7 @@ private fun AdminProductEditDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -495,40 +519,57 @@ private fun AdminProductEditDialog(
                         checked = activo,
                         onCheckedChange = { onActivoToggle() }
                     )
-                    Text("Activo")
+                    Text(
+                        text = "Activo",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
 
-                Divider()
+                Divider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
 
+                // ------------ Archivo principal ------------
                 Text(
                     text = "Archivo del producto",
                     style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = if (tieneArchivo) "Archivo actual: Sí" else "Archivo actual: No",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Button(
                     onClick = onUploadFileClick,
                     enabled = !loading,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
                     Text(if (tieneArchivo) "Reemplazar archivo" else "Subir archivo")
                 }
 
-                Divider()
+                Divider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
 
+                // ------------ Imágenes ------------
                 Text(
                     text = "Imágenes del producto",
                     style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 if (imagenes.isEmpty()) {
                     Text(
                         text = "Sin imágenes",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
                     Column(
@@ -537,7 +578,11 @@ private fun AdminProductEditDialog(
                     ) {
                         imagenes.sortedBy { it.orden }.forEach { img ->
                             Card(
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -549,7 +594,7 @@ private fun AdminProductEditDialog(
                                     AsyncImage(
                                         model = img.url,
                                         contentDescription = "Imagen ${img.id}",
-                                        modifier = Modifier.size(64.dp)
+                                        modifier = Modifier.size(120.dp)
                                     )
 
                                     Column(
@@ -557,11 +602,13 @@ private fun AdminProductEditDialog(
                                     ) {
                                         Text(
                                             text = "ID: ${img.id}",
-                                            style = MaterialTheme.typography.bodySmall
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = "Orden: ${img.orden}",
-                                            style = MaterialTheme.typography.bodySmall
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
 
@@ -591,7 +638,10 @@ private fun AdminProductEditDialog(
                 OutlinedButton(
                     onClick = onAddImageClick,
                     enabled = !loading,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
                 ) {
                     Text("Agregar imagen")
                 }
@@ -602,7 +652,15 @@ private fun AdminProductEditDialog(
                 onClick = onSubmit,
                 enabled = !loading
             ) {
-                Text("Guardar")
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Text("Guardar")
+                }
             }
         },
         dismissButton = {
@@ -615,6 +673,7 @@ private fun AdminProductEditDialog(
         }
     )
 }
+
 
 /* --------------------------------------------------------------------- */
 /*  PAGINADOR                                                            */

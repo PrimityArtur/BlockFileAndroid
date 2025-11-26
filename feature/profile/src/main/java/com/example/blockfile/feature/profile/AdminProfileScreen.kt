@@ -64,7 +64,7 @@ fun AdminProfileScreen(
                     Text("Inventario")
                 }
                 TextButton(onClick = onGoCategorias) {
-                    Text("Categorías")
+                    Text("Categ.")
                 }
                 TextButton(onClick = onGoUsuarios) {
                     Text("Usuarios")

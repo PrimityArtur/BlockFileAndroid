@@ -26,11 +26,17 @@ fun AdminUsersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Panel administrador") },
+                title = {
+                    Text(
+                        text = "BlockFile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
                     TextButton(onClick = onGoPerfil) { Text("Perfil") }
                     TextButton(onClick = onGoInventario) { Text("Inventario") }
-                    TextButton(onClick = onGoCategorias) { Text("Categorías") }
+                    TextButton(onClick = onGoCategorias) { Text("Categ.") }
                     TextButton(onClick = { /* ya estamos en usuarios */ }, enabled = false) {
                         Text("Usuarios")
                     }
@@ -146,6 +152,10 @@ private fun AdminUsersTableWithFiltersSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -333,36 +343,56 @@ private fun AdminUserEditDialog(
     onDelete: () -> Unit,
 ) {
     AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismiss,
         title = {
-            Text("Editar usuario")
+            Text(
+                text = "Editar usuario",
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Campos no modificables
+                // ----------------- Campos no modificables -----------------
                 Text(
-                    text = "Campos no modificables",
+                    text = "Datos del usuario",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text("Fecha de creación: $fecha")
-                    Text("Nombre de usuario: $nombre")
-                    Text("Correo: ${if (correo.isNotBlank()) correo else "—"}")
-                    Text("ID: $id")
+                    Text(
+                        text = "Fecha de creación: $fecha",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Nombre de usuario: $nombre",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Correo: ${if (correo.isNotBlank()) correo else "—"}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "ID: $id",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                Divider()
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
+                // ----------------- Campo editable -----------------
                 Text(
                     text = "Campos editables",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 OutlinedTextField(
@@ -376,17 +406,39 @@ private fun AdminUserEditDialog(
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Botón borrar (estilo peligro)
                 TextButton(
                     onClick = onDelete,
                     enabled = !loading
                 ) {
-                    Text("Borrar")
+                    if (loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else {
+                        Text(
+                            text = "Borrar",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
+
+                // Botón aceptar (acción principal)
                 TextButton(
                     onClick = onSubmit,
                     enabled = !loading
                 ) {
-                    Text("Aceptar")
+                    if (loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Text("Aceptar")
+                    }
                 }
             }
         },
@@ -411,17 +463,37 @@ private fun ConfirmDeleteUserDialog(
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismiss,
-        title = { Text("Eliminar usuario") },
+        title = {
+            Text(
+                text = "Eliminar usuario",
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
-            Text("¿Eliminar al usuario \"$nombreUsuario\"?")
+            Text(
+                text = "¿Eliminar al usuario \"$nombreUsuario\"?",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
                 enabled = !loading
             ) {
-                Text("Eliminar")
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         dismissButton = {
@@ -434,6 +506,7 @@ private fun ConfirmDeleteUserDialog(
         }
     )
 }
+
 
 /* ----------------------------- PAGINADOR ----------------------------- */
 

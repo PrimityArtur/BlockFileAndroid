@@ -137,27 +137,12 @@ fun CatalogScreen(
         }
 
         // ===== PAGINADOR ABAJO =====
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Página ${state.page} de ${state.totalPages}")
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = { viewModel.irPagina(state.page - 1) },
-                    enabled = state.page > 1 && !state.loading
-                ) { Text("Anterior") }
-
-                OutlinedButton(
-                    onClick = { viewModel.irPagina(state.page + 1) },
-                    enabled = state.page < state.totalPages && !state.loading
-                ) { Text("Siguiente") }
-            }
-        }
+        PagerControls(
+            page = state.page,
+            totalPages = state.totalPages,
+            loading = state.loading,
+            onPageChange = { viewModel.irPagina(it) }
+        )
     }
 }
 @Composable
@@ -313,4 +298,50 @@ private fun RatingStarsCompact(rating: Double) {
         style = MaterialTheme.typography.bodySmall,
         color = Warning
     )
+}
+
+@Composable
+private fun PagerControls(
+    page: Int,
+    totalPages: Int,
+    loading: Boolean,
+    onPageChange: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(
+            onClick = { onPageChange(1) },
+            enabled = page > 1 && !loading,
+        ) {
+            Text("« Primero")
+        }
+
+        TextButton(
+            onClick = { onPageChange(page - 1) },
+            enabled = page > 1 && !loading,
+        ) {
+            Text("‹ Ant")
+        }
+
+        Text("Página $page de $totalPages", color = MaterialTheme.colorScheme.onSurface)
+
+        TextButton(
+            onClick = { onPageChange(page + 1) },
+            enabled = page < totalPages && !loading,
+        ) {
+            Text("Sig ›")
+        }
+
+        TextButton(
+            onClick = { onPageChange(totalPages) },
+            enabled = page < totalPages && !loading,
+        ) {
+            Text("Último »")
+        }
+    }
 }

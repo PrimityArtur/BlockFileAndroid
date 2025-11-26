@@ -214,7 +214,7 @@ fun BlockFileNavHost(
             val viewModel: AdminCategoriesViewModel = hiltViewModel()
             AdminCategoriesScreen(
                 viewModel = viewModel,
-                onGoPerfil = { navController.navigate("admin/perfil") },
+                onGoPerfil = { navController.navigate("admin/profile") },
                 onGoInventario = { navController.navigate("admin/inventario") },
                 onGoCategorias = { /* ya estás en Categorías */ },
                 onGoUsuarios = { navController.navigate("admin/usuarios") },
@@ -225,7 +225,7 @@ fun BlockFileNavHost(
             val viewModel: AdminUsersViewModel = hiltViewModel()
             AdminUsersScreen(
                 viewModel = viewModel,
-                onGoPerfil = { navController.navigate("admin/perfil") },
+                onGoPerfil = { navController.navigate("admin/profile") },
                 onGoInventario = { navController.navigate("admin/inventario") },
                 onGoCategorias = { navController.navigate("admin/categorias") },
                 onGoUsuarios = { /* ya aquí */ },
