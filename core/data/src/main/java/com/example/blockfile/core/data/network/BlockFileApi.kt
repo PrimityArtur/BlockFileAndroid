@@ -1,6 +1,7 @@
 package com.example.blockfile.core.data.network
 
 import com.example.blockfile.core.model.ActualizarPerfilRequestDto
+import com.example.blockfile.core.model.AdminProductDetailDto
 import com.example.blockfile.core.model.AdminProductsResponseDto
 import com.example.blockfile.core.model.AdminProfileDto
 import com.example.blockfile.core.model.CatalogResponseDto
@@ -17,12 +18,20 @@ import com.example.blockfile.core.model.RankingProductosMejorCalificadosResponse
 import com.example.blockfile.core.model.RatingRequestDto
 import com.example.blockfile.core.model.RegisterRequest
 import com.example.blockfile.core.model.RegisterResponse
+import com.example.blockfile.core.model.SaveAdminProductRequestDto
+import com.example.blockfile.core.model.SaveAdminProductResponseDto
 import com.example.blockfile.core.model.SimpleResponseDto
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import okhttp3.ResponseBody
 import retrofit2.http.Body
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Streaming
@@ -122,6 +131,7 @@ interface BlockFileApi {
         @Body body: AdminProfileDto
     ): AdminProfileDto
 
+
     @GET("apimovil/admin/productos/")
     suspend fun getAdminProducts(
         @Query("page") page: Int,
@@ -130,4 +140,42 @@ interface BlockFileApi {
         @Query("autor") autor: String? = null,
         @Query("categoria") categoria: String? = null,
     ): AdminProductsResponseDto
+
+    @GET("apimovil/admin/productos/detalle/{id}/")
+    suspend fun getAdminProductDetail(
+        @Path("id") id: Long,
+    ): AdminProductDetailDto
+
+    @POST("apimovil/admin/productos/guardar/")
+    suspend fun saveAdminProduct(
+        @Body body: SaveAdminProductRequestDto,
+    ): SaveAdminProductResponseDto
+
+    @Multipart
+    @POST("apimovil/admin/productos/archivo/")
+    suspend fun uploadAdminProductFile(
+        @Part("id_producto") idProducto: RequestBody,
+        @Part archivo: MultipartBody.Part,
+    ): SimpleResponseDto
+
+    @Multipart
+    @POST("apimovil/admin/productos/imagenes/agregar/")
+    suspend fun addAdminProductImage(
+        @Part("id_producto") idProducto: RequestBody,
+        @Part("orden") orden: RequestBody?,
+        @Part archivo: MultipartBody.Part,
+    ): SimpleResponseDto
+
+    @FormUrlEncoded
+    @POST("apimovil/admin/productos/imagenes/reordenar/")
+    suspend fun reorderAdminProductImage(
+        @Field("id_imagen") idImagen: Long,
+        @Field("orden") orden: Int,
+    ): SimpleResponseDto
+
+    @FormUrlEncoded
+    @POST("apimovil/admin/productos/imagenes/borrar/")
+    suspend fun deleteAdminProductImage(
+        @Field("id_imagen") idImagen: Long,
+    ): SimpleResponseDto
 }

@@ -1,16 +1,26 @@
 package com.example.blockfile.feature.adminproducts
 
-import androidx.compose.foundation.clickable
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.blockfile.core.model.AdminProductImage
 import com.example.blockfile.core.model.AdminProductItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,6 +33,33 @@ fun AdminProductsScreen(
     onGoUsuarios: () -> Unit,
 ) {
     val state = viewModel.uiState
+    val context = LocalContext.current
+
+    // ---------- PICKER PARA ARCHIVO PRINCIPAL ----------
+    val archivoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val pair = readBytesAndNameFromUri(context, uri)
+            if (pair != null) {
+                val (bytes, filename) = pair
+                viewModel.uploadFileForCurrentProduct(bytes, filename)
+            }
+        }
+    }
+
+    // ---------- PICKER PARA IMAGENES ----------
+    val imagenPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val pair = readBytesAndNameFromUri(context, uri)
+            if (pair != null) {
+                val (bytes, filename) = pair
+                viewModel.addImageForCurrentProduct(bytes, filename, orden = null)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -37,68 +74,102 @@ fun AdminProductsScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            // ===== TÍTULO + BOTÓN AGREGAR =====
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Gestión de productos",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Button(
-                    onClick = { /* TODO: abrir creación de producto */ },
-                    enabled = !state.loading
-                ) {
-                    Text("Agregar")
-                }
-            }
-
-            // ===== CONTENIDO SCROLL (FILTROS + TABLA) =====
+        Box(modifier = Modifier.padding(padding)) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
             ) {
-                AdminProductsTableWithFiltersSection(
-                    loading = state.loading,
-                    error = state.error,
-                    items = state.items,
-                    idValue = state.id,
-                    nombreValue = state.nombre,
-                    autorValue = state.autor,
-                    categoriaValue = state.categoria,
-                    onIdChange = viewModel::onIdChange,
-                    onNombreChange = viewModel::onNombreChange,
-                    onAutorChange = viewModel::onAutorChange,
-                    onCategoriaChange = viewModel::onCategoriaChange,
-                    onBuscar = { viewModel.buscarPrimeraPagina() },
-                    onEditClick = { /* luego abrimos pantalla edición */ },
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Gestión de productos",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = { viewModel.onAddClick() },
+                        enabled = !state.loading
+                    ) {
+                        Text("Agregar")
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    AdminProductsTableWithFiltersSection(
+                        loading = state.loading,
+                        error = state.error,
+                        items = state.items,
+                        idValue = state.id,
+                        nombreValue = state.nombre,
+                        autorValue = state.autor,
+                        categoriaValue = state.categoria,
+                        onIdChange = viewModel::onIdChange,
+                        onNombreChange = viewModel::onNombreChange,
+                        onAutorChange = viewModel::onAutorChange,
+                        onCategoriaChange = viewModel::onCategoriaChange,
+                        onBuscar = { viewModel.buscarPrimeraPagina() },
+                        onEditClick = { item -> viewModel.onEditClick(item) },
+                    )
+                }
+
+                PagerControls(
+                    page = state.page,
+                    totalPages = state.totalPages,
+                    onPageChange = { viewModel.irPagina(it) }
                 )
             }
 
-            // ===== PAGINADOR FIJO ABAJO (IGUAL QUE RANKINGS) =====
-            PagerControls(
-                page = state.page,
-                totalPages = state.totalPages,
-                onPageChange = { viewModel.irPagina(it) }
-            )
+            if (state.showEditDialog) {
+                AdminProductEditDialog(
+                    isEdit = state.isEdit,
+                    nombre = state.formNombre,
+                    descripcion = state.formDescripcion,
+                    version = state.formVersion,
+                    precio = state.formPrecio,
+                    autorId = state.formAutorId,
+                    categoriaId = state.formCategoriaId,
+                    activo = state.formActivo,
+                    tieneArchivo = state.formTieneArchivo,
+                    imagenes = state.formImagenes,
+                    loading = state.loading,
+                    onNombreChange = viewModel::onFormNombreChange,
+                    onDescripcionChange = viewModel::onFormDescripcionChange,
+                    onVersionChange = viewModel::onFormVersionChange,
+                    onPrecioChange = viewModel::onFormPrecioChange,
+                    onAutorIdChange = viewModel::onFormAutorIdChange,
+                    onCategoriaIdChange = viewModel::onFormCategoriaIdChange,
+                    onActivoToggle = viewModel::onFormActivoToggle,
+                    onUploadFileClick = {
+                        // abre picker para cualquier archivo
+                        archivoPickerLauncher.launch("*/*")
+                    },
+                    onAddImageClick = {
+                        // abre picker solo para imágenes
+                        imagenPickerLauncher.launch("image/*")
+                    },
+                    onMoveImageUp = { img -> viewModel.moveImageUp(img) },
+                    onMoveImageDown = { img -> viewModel.moveImageDown(img) },
+                    onDeleteImage = { img -> viewModel.deleteImage(img) },
+                    onDismiss = viewModel::onDismissDialog,
+                    onSubmit = viewModel::onSubmitForm,
+                )
+            }
         }
     }
 }
 
 /* --------------------------------------------------------------------- */
-/*  SECCIÓN SCROLLEABLE: FILTROS + TABLA ESTILO RANKINGS                 */
+/*  TABLA + FILTROS                                                      */
 /* --------------------------------------------------------------------- */
 
 @Composable
@@ -128,15 +199,13 @@ private fun AdminProductsTableWithFiltersSection(
         )
     }
 
-    // Pesos de cada columna: ID, Nombre, Autor, Categoría, Acciones
-    val weights = listOf(0.4f, 2.0f, 1.4f, 1.4f, 1.5f)
+    val weights = listOf(0.6f, 2.0f, 1.4f, 1.4f, 1.2f)
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        // ===== ITEM 1: FILTROS =====
         item {
             Card(
                 modifier = Modifier
@@ -210,7 +279,6 @@ private fun AdminProductsTableWithFiltersSection(
             }
         }
 
-        // ===== ITEM 2: HEADER DE TABLA =====
         item {
             TableHeader(
                 headers = listOf("ID", "Producto", "Autor", "Categoría", "Acciones"),
@@ -219,12 +287,9 @@ private fun AdminProductsTableWithFiltersSection(
             Divider()
         }
 
-        // ===== ITEMS: FILAS DE TABLA =====
         items(items) { item ->
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = false) { /* nada por ahora */ },
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 AdminProductTableRow(
                     item = item,
@@ -236,10 +301,6 @@ private fun AdminProductsTableWithFiltersSection(
         }
     }
 }
-
-/* --------------------------------------------------------------------- */
-/*  HEADER Y FILA IGUAL ESTILO RANKINGS                                  */
-/* --------------------------------------------------------------------- */
 
 @Composable
 private fun TableHeader(
@@ -280,10 +341,9 @@ private fun AdminProductTableRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 25.dp, horizontal = 16.dp),
+            .padding(vertical = 30.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // ID
         Text(
             text = item.id.toString(),
             modifier = Modifier
@@ -292,7 +352,6 @@ private fun AdminProductTableRow(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
-        // Nombre
         Text(
             text = item.nombre,
             modifier = Modifier
@@ -303,7 +362,6 @@ private fun AdminProductTableRow(
             softWrap = true,
             maxLines = Int.MAX_VALUE
         )
-        // Autor
         Text(
             text = item.autor.ifBlank { "-" },
             modifier = Modifier
@@ -314,7 +372,6 @@ private fun AdminProductTableRow(
             softWrap = true,
             maxLines = Int.MAX_VALUE
         )
-        // Categoría
         Text(
             text = item.categoria.ifBlank { "-" },
             modifier = Modifier
@@ -325,7 +382,6 @@ private fun AdminProductTableRow(
             softWrap = true,
             maxLines = Int.MAX_VALUE
         )
-        // Acciones
         Box(
             modifier = Modifier
                 .weight(weights[4])
@@ -333,14 +389,235 @@ private fun AdminProductTableRow(
             contentAlignment = Alignment.Center
         ) {
             OutlinedButton(onClick = onEditClick) {
-                Text("Edit")
+                Text("+")
             }
         }
     }
 }
 
 /* --------------------------------------------------------------------- */
-/*  PAGINADOR IGUAL QUE EN RANKINGS                                      */
+/*  DIALOGO DE EDICIÓN (SCROLL + IMAGENES)                               */
+/* --------------------------------------------------------------------- */
+
+@Composable
+private fun AdminProductEditDialog(
+    isEdit: Boolean,
+    nombre: String,
+    descripcion: String,
+    version: String,
+    precio: String,
+    autorId: String,
+    categoriaId: String,
+    activo: Boolean,
+    tieneArchivo: Boolean,
+    imagenes: List<AdminProductImage>,
+    loading: Boolean,
+    onNombreChange: (String) -> Unit,
+    onDescripcionChange: (String) -> Unit,
+    onVersionChange: (String) -> Unit,
+    onPrecioChange: (String) -> Unit,
+    onAutorIdChange: (String) -> Unit,
+    onCategoriaIdChange: (String) -> Unit,
+    onActivoToggle: () -> Unit,
+    onUploadFileClick: () -> Unit,
+    onAddImageClick: () -> Unit,
+    onMoveImageUp: (AdminProductImage) -> Unit,
+    onMoveImageDown: (AdminProductImage) -> Unit,
+    onDeleteImage: (AdminProductImage) -> Unit,
+    onDismiss: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    val scrollState = rememberScrollState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(if (isEdit) "Editar producto" else "Agregar producto")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(scrollState)
+            ) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = onNombreChange,
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = onDescripcionChange,
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = version,
+                    onValueChange = onVersionChange,
+                    label = { Text("Versión") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = precio,
+                    onValueChange = onPrecioChange,
+                    label = { Text("Precio (ej. 10.50)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = autorId,
+                        onValueChange = onAutorIdChange,
+                        label = { Text("ID Autor") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = categoriaId,
+                        onValueChange = onCategoriaIdChange,
+                        label = { Text("ID Categoría") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = activo,
+                        onCheckedChange = { onActivoToggle() }
+                    )
+                    Text("Activo")
+                }
+
+                Divider()
+
+                Text(
+                    text = "Archivo del producto",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = if (tieneArchivo) "Archivo actual: Sí" else "Archivo actual: No",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Button(
+                    onClick = onUploadFileClick,
+                    enabled = !loading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (tieneArchivo) "Reemplazar archivo" else "Subir archivo")
+                }
+
+                Divider()
+
+                Text(
+                    text = "Imágenes del producto",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                if (imagenes.isEmpty()) {
+                    Text(
+                        text = "Sin imágenes",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        imagenes.sortedBy { it.orden }.forEach { img ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = img.url,
+                                        contentDescription = "Imagen ${img.id}",
+                                        modifier = Modifier.size(64.dp)
+                                    )
+
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "ID: ${img.id}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        Text(
+                                            text = "Orden: ${img.orden}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        TextButton(
+                                            onClick = { onMoveImageUp(img) },
+                                            enabled = !loading
+                                        ) { Text("↑") }
+                                        TextButton(
+                                            onClick = { onMoveImageDown(img) },
+                                            enabled = !loading
+                                        ) { Text("↓") }
+                                        TextButton(
+                                            onClick = { onDeleteImage(img) },
+                                            enabled = !loading
+                                        ) { Text("X") }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = onAddImageClick,
+                    enabled = !loading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Agregar imagen")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = !loading
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !loading
+            ) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+/* --------------------------------------------------------------------- */
+/*  PAGINADOR                                                            */
 /* --------------------------------------------------------------------- */
 
 @Composable
@@ -378,4 +655,25 @@ private fun PagerControls(
             enabled = page < totalPages,
         ) { Text("Último »") }
     }
+}
+
+/* --------------------------------------------------------------------- */
+/*  HELPERS PARA LEER BYTES + NOMBRE DE URI                              */
+/* --------------------------------------------------------------------- */
+
+private fun readBytesAndNameFromUri(context: Context, uri: Uri): Pair<ByteArray, String>? {
+    val resolver = context.contentResolver
+
+    val name = resolver.query(uri, null, null, null, null)?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (cursor.moveToFirst() && nameIndex >= 0) {
+            cursor.getString(nameIndex)
+        } else null
+    } ?: "archivo.bin"
+
+    val bytes = resolver.openInputStream(uri)?.use { input ->
+        input.readBytes()
+    } ?: return null
+
+    return bytes to name
 }
