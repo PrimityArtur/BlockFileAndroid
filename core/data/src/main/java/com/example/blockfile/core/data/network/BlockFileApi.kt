@@ -5,10 +5,13 @@ import com.example.blockfile.core.model.AdminCategoriesResponseDto
 import com.example.blockfile.core.model.AdminProductDetailDto
 import com.example.blockfile.core.model.AdminProductsResponseDto
 import com.example.blockfile.core.model.AdminProfileDto
+import com.example.blockfile.core.model.AdminUserDetailDto
+import com.example.blockfile.core.model.AdminUsersResponseDto
 import com.example.blockfile.core.model.CatalogResponseDto
 import com.example.blockfile.core.model.CommentRequestDto
 import com.example.blockfile.core.model.ComprasClienteResponseDto
 import com.example.blockfile.core.model.DeleteCategoryRequestDto
+import com.example.blockfile.core.model.DeleteUserRequestDto
 import com.example.blockfile.core.model.LoginRequest
 import com.example.blockfile.core.model.LoginResponse
 import com.example.blockfile.core.model.PerfilClienteResponseDto
@@ -24,6 +27,8 @@ import com.example.blockfile.core.model.SaveAdminProductRequestDto
 import com.example.blockfile.core.model.SaveAdminProductResponseDto
 import com.example.blockfile.core.model.SaveCategoryRequestDto
 import com.example.blockfile.core.model.SaveCategoryResponseDto
+import com.example.blockfile.core.model.SaveUserSaldoRequestDto
+import com.example.blockfile.core.model.SaveUserSaldoResponseDto
 import com.example.blockfile.core.model.SimpleResponseDto
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -201,6 +206,30 @@ interface BlockFileApi {
     @POST("apimovil/admin/categorias/eliminar/")
     suspend fun deleteAdminCategory(
         @Body body: DeleteCategoryRequestDto,
+    ): SimpleResponseDto
+
+
+    @GET("apimovil/admin/usuarios/")
+    suspend fun getAdminUsersPage(
+        @Query("page") page: Int,
+        @Query("id") id: String? = null,
+        @Query("nombre") nombre: String? = null,
+        @Query("saldo") saldo: String? = null,
+    ): AdminUsersResponseDto
+
+    @GET("apimovil/admin/usuarios/detalle/{id_usuario}/")
+    suspend fun getAdminUserDetail(
+        @Path("id_usuario") id: Long,
+    ): AdminUserDetailDto
+
+    @POST("apimovil/admin/usuarios/guardar/")
+    suspend fun saveAdminUserSaldo(
+        @Body body: SaveUserSaldoRequestDto,
+    ): SaveUserSaldoResponseDto
+
+    @POST("apimovil/admin/usuarios/eliminar/")
+    suspend fun deleteAdminUser(
+        @Body body: DeleteUserRequestDto,
     ): SimpleResponseDto
 
 

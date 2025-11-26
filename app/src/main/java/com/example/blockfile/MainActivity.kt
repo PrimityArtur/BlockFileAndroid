@@ -32,6 +32,8 @@ import com.example.blockfile.feature.admincategories.AdminCategoriesScreen
 import com.example.blockfile.feature.admincategories.AdminCategoriesViewModel
 import com.example.blockfile.feature.adminproducts.AdminProductsScreen
 import com.example.blockfile.feature.adminproducts.AdminProductsViewModel
+import com.example.blockfile.feature.adminusers.AdminUsersScreen
+import com.example.blockfile.feature.adminusers.AdminUsersViewModel
 import com.example.blockfile.feature.profile.AdminProfileScreen
 import com.example.blockfile.feature.profile.AdminProfileViewModel
 
@@ -220,9 +222,13 @@ fun BlockFileNavHost(
         }
 
         composable("admin/usuarios") {
-            AdminSectionPlaceholderScreen(
-                title = "Usuarios",
-                onBackToPerfil = { navController.navigate("admin/profile") }
+            val viewModel: AdminUsersViewModel = hiltViewModel()
+            AdminUsersScreen(
+                viewModel = viewModel,
+                onGoPerfil = { navController.navigate("admin/perfil") },
+                onGoInventario = { navController.navigate("admin/inventario") },
+                onGoCategorias = { navController.navigate("admin/categorias") },
+                onGoUsuarios = { /* ya aquí */ },
             )
         }
     }
