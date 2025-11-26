@@ -28,6 +28,8 @@ import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.blockfile.feature.admincategories.AdminCategoriesScreen
+import com.example.blockfile.feature.admincategories.AdminCategoriesViewModel
 import com.example.blockfile.feature.adminproducts.AdminProductsScreen
 import com.example.blockfile.feature.adminproducts.AdminProductsViewModel
 import com.example.blockfile.feature.profile.AdminProfileScreen
@@ -207,9 +209,13 @@ fun BlockFileNavHost(
         }
 
         composable("admin/categorias") {
-            AdminSectionPlaceholderScreen(
-                title = "Categorías",
-                onBackToPerfil = { navController.navigate("admin/profile") }
+            val viewModel: AdminCategoriesViewModel = hiltViewModel()
+            AdminCategoriesScreen(
+                viewModel = viewModel,
+                onGoPerfil = { navController.navigate("admin/perfil") },
+                onGoInventario = { navController.navigate("admin/inventario") },
+                onGoCategorias = { /* ya estás en Categorías */ },
+                onGoUsuarios = { navController.navigate("admin/usuarios") },
             )
         }
 

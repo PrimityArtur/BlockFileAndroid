@@ -1,6 +1,7 @@
 package com.example.blockfile.core.data.network
 
 import com.example.blockfile.core.model.ActualizarPerfilRequestDto
+import com.example.blockfile.core.model.AdminCategoriesResponseDto
 import com.example.blockfile.core.model.AdminProductDetailDto
 import com.example.blockfile.core.model.AdminProductsResponseDto
 import com.example.blockfile.core.model.AdminProfileDto
@@ -178,4 +179,15 @@ interface BlockFileApi {
     suspend fun deleteAdminProductImage(
         @Field("id_imagen") idImagen: Long,
     ): SimpleResponseDto
+
+    // ================== ADMIN CATEGORÍAS (MÓVIL) ==================
+
+    @GET("apimovil/admin/categorias/")
+    suspend fun getAdminCategoriesPage(
+        @Query("page") page: Int,
+        @Query("id") id: String? = null,
+        @Query("nombre") nombre: String? = null,
+        @Query("descripcion") descripcion: String? = null,
+    ): AdminCategoriesResponseDto
+
 }
