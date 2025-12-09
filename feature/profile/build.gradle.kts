@@ -61,4 +61,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Retrofit / OkHttp / Serialization
+    implementation(libs.retrofit2)
+    implementation(libs.retrofit2.kotlinx.serialization)
 }

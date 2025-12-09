@@ -43,6 +43,19 @@ class AuthRepositoryImpl @Inject constructor(
 
     private fun parseErrorBody(e: HttpException): String {
         val rawBody = e.response()?.errorBody()?.string()
-        return rawBody ?: "Error del servidor (${e.code()})."
+            ?: return "Error del servidor (${e.code()})."
+
+        return try {
+            val json = org.json.JSONObject(rawBody)
+
+            when {
+                json.has("error") -> json.getString("error")
+                json.has("errors") -> json.getString("errors")
+                json.has("detail") -> json.getString("detail")
+                else -> rawBody
+            }
+        } catch (_: Exception) {
+            rawBody
+        }
     }
 }

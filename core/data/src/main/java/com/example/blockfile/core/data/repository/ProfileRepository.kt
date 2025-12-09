@@ -57,7 +57,7 @@ class ProfileRepositoryImpl @Inject constructor(
                 contrasena = contrasena?.takeIf { it.isNotBlank() },
             )
             val res = api.actualizarPerfilCliente(body)
-            val dto = res.perfil  // ⬅ variable local
+            val dto = res.perfil
 
             if (!res.ok || dto == null) {
                 throw Exception(res.error ?: "No se pudo actualizar el perfil.")
@@ -109,6 +109,19 @@ class ProfileRepositoryImpl @Inject constructor(
 
     private fun parseErrorBody(e: HttpException): String {
         val rawBody = e.response()?.errorBody()?.string()
-        return rawBody ?: "Error del servidor (${e.code()})."
+            ?: return "Error del servidor (${e.code()})."
+
+        return try {
+            val json = org.json.JSONObject(rawBody)
+
+            when {
+                json.has("error") -> json.getString("error")
+                json.has("errors") -> json.getString("errors")
+                json.has("detail") -> json.getString("detail")
+                else -> rawBody
+            }
+        } catch (_: Exception) {
+            rawBody
+        }
     }
 }

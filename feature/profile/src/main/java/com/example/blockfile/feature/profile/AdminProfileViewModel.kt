@@ -10,6 +10,8 @@ import com.example.blockfile.core.data.network.BlockFileApi
 import com.example.blockfile.core.model.AdminProfileDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 data class AdminProfileUiState(
@@ -77,7 +79,17 @@ class AdminProfileViewModel @Inject constructor(
                     correo = uiState.correo,
                     contrasena = uiState.contrasena,
                 )
-                val updated = api.updateAdminProfile(body)
+                val updated = try {
+                    api.updateAdminProfile(body)
+                } catch (e: HttpException) {
+                    // 👇 Igual que en AuthRepositoryImpl
+                    val rawBody = e.response()?.errorBody()?.string()
+                    val msg = rawBody ?: "Error del servidor (${e.code()})."
+                    throw Exception(msg)
+                } catch (e: IOException) {
+                    throw Exception("Error de conexión. Verifica tu internet.")
+                }
+
                 uiState = uiState.copy(
                     saving = false,
                     nombre = updated.nombre,

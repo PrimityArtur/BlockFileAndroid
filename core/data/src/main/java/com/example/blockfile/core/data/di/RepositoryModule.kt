@@ -4,6 +4,8 @@ import android.content.Context
 import com.example.blockfile.core.data.network.BlockFileApi
 import com.example.blockfile.core.data.repository.AdminProductsRepository
 import com.example.blockfile.core.data.repository.AdminProductsRepositoryImpl
+import com.example.blockfile.core.data.repository.AdminProfileRepository
+import com.example.blockfile.core.data.repository.AdminProfileRepositoryImpl
 import com.example.blockfile.core.data.repository.AuthRepository
 import com.example.blockfile.core.data.repository.AuthRepositoryImpl
 import com.example.blockfile.core.data.repository.CatalogRepository
@@ -31,6 +33,11 @@ object RepositoryModule {
     @Singleton
     fun provideAuthRepository(api: BlockFileApi): AuthRepository =
         AuthRepositoryImpl(api)
+
+    @Provides
+    @Singleton
+    fun provideAdminProfileRepository(api: BlockFileApi): AdminProfileRepository =
+        AdminProfileRepositoryImpl(api)
 
     @Provides
     @Singleton
